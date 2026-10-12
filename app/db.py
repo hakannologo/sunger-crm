@@ -159,8 +159,110 @@ def _urun_listesini_yukle(db):
                 )
 
 
+def _goc_2_talep_satis_musteri(db):
+    db.executescript(
+        """
+        BEGIN;
+        CREATE TABLE musteriler (
+            id INTEGER PRIMARY KEY,
+            ad TEXT NOT NULL,
+            telefon TEXT,                 -- sadece rakam, 10 hane (5xx...)
+            sosyal TEXT,                  -- Instagram/Facebook kullanıcı adı
+            tip TEXT NOT NULL DEFAULT 'bireysel' CHECK (tip IN ('bireysel', 'toptan')),
+            firma_adi TEXT,
+            vergi_no TEXT,
+            vergi_dairesi TEXT,
+            sehir TEXT,
+            adres TEXT,
+            notlar TEXT,
+            olusturan_id INTEGER REFERENCES kullanicilar (id),
+            olusturma TEXT NOT NULL,
+            guncelleme TEXT NOT NULL
+        );
+        CREATE INDEX ix_musteri_telefon ON musteriler (telefon);
+
+        CREATE TABLE talepler (
+            id INTEGER PRIMARY KEY,
+            kanal TEXT NOT NULL CHECK (kanal IN ('telefon', 'whatsapp', 'instagram', 'facebook', 'diger')),
+            ad TEXT,
+            telefon TEXT,
+            sosyal TEXT,
+            marka_id INTEGER REFERENCES markalar (id),
+            model_id INTEGER REFERENCES modeller (id),
+            arac_notu TEXT,
+            fiyat_tipi TEXT NOT NULL DEFAULT 'perakende' CHECK (fiyat_tipi IN ('perakende', 'toptan')),
+            durum TEXT NOT NULL DEFAULT 'fiyat_verildi'
+                CHECK (durum IN ('fiyat_verildi', 'dusunuyor', 'satis', 'olmadi')),
+            kayip_sebebi TEXT,
+            hatirlatma TEXT,              -- YYYY-AA-GG, boşsa hatırlatma yok
+            notlar TEXT,
+            toplam_kurus INTEGER NOT NULL DEFAULT 0,
+            kullanici_id INTEGER NOT NULL REFERENCES kullanicilar (id),
+            musteri_id INTEGER REFERENCES musteriler (id),
+            satis_id INTEGER,
+            olusturma TEXT NOT NULL,
+            guncelleme TEXT NOT NULL
+        );
+        CREATE INDEX ix_talep_hatirlatma ON talepler (kullanici_id, hatirlatma);
+        CREATE INDEX ix_talep_telefon ON talepler (telefon);
+        CREATE INDEX ix_talep_olusturma ON talepler (olusturma);
+
+        CREATE TABLE talep_kalemleri (
+            id INTEGER PRIMARY KEY,
+            talep_id INTEGER NOT NULL REFERENCES talepler (id) ON DELETE CASCADE,
+            urun_id INTEGER REFERENCES urunler (id),
+            urun_adi TEXT NOT NULL,
+            adet INTEGER NOT NULL DEFAULT 1,
+            birim_kurus INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX ix_talep_kalem ON talep_kalemleri (talep_id);
+
+        CREATE TABLE talep_notlari (
+            id INTEGER PRIMARY KEY,
+            talep_id INTEGER NOT NULL REFERENCES talepler (id) ON DELETE CASCADE,
+            kullanici_id INTEGER REFERENCES kullanicilar (id),
+            zaman TEXT NOT NULL,
+            metin TEXT NOT NULL
+        );
+        CREATE INDEX ix_talep_not ON talep_notlari (talep_id);
+
+        CREATE TABLE satislar (
+            id INTEGER PRIMARY KEY,
+            talep_id INTEGER REFERENCES talepler (id),
+            musteri_id INTEGER NOT NULL REFERENCES musteriler (id),
+            kullanici_id INTEGER NOT NULL REFERENCES kullanicilar (id),
+            durum TEXT NOT NULL DEFAULT 'hazirlaniyor'
+                CHECK (durum IN ('hazirlaniyor', 'kargoda', 'teslim', 'iade')),
+            odeme TEXT NOT NULL CHECK (odeme IN ('nakit', 'kart', 'havale', 'kapida')),
+            fiyat_tipi TEXT NOT NULL DEFAULT 'perakende',
+            adres TEXT,
+            sehir TEXT,
+            kargo_firma TEXT NOT NULL DEFAULT 'Aras Kargo',
+            takip_no TEXT,
+            toplam_kurus INTEGER NOT NULL DEFAULT 0,
+            notlar TEXT,
+            olusturma TEXT NOT NULL,
+            guncelleme TEXT NOT NULL
+        );
+        CREATE INDEX ix_satis_musteri ON satislar (musteri_id);
+        CREATE INDEX ix_satis_olusturma ON satislar (olusturma);
+
+        CREATE TABLE satis_kalemleri (
+            id INTEGER PRIMARY KEY,
+            satis_id INTEGER NOT NULL REFERENCES satislar (id) ON DELETE CASCADE,
+            urun_id INTEGER REFERENCES urunler (id),
+            urun_adi TEXT NOT NULL,
+            adet INTEGER NOT NULL DEFAULT 1,
+            birim_kurus INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX ix_satis_kalem ON satis_kalemleri (satis_id);
+        """
+    )
+
+
 GOCLER = [
     _goc_1_temel_tablolar,
+    _goc_2_talep_satis_musteri,
 ]
 
 

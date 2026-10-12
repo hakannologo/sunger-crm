@@ -6,7 +6,8 @@ from datetime import timedelta
 from flask import Flask, g, redirect, render_template, request, session, url_for
 
 from . import db
-from .yardimci import csrf_kontrol, csrf_token, tarih_yaz, tl_girdi, tl_yaz
+from .yardimci import (KANALLAR, ODEME_SEKILLERI, SATIS_DURUMLARI, TALEP_DURUMLARI, csrf_kontrol, csrf_token,
+                       tarih_yaz, tel_yaz, tl_girdi, tl_yaz)
 
 PROJE_KLASORU = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -52,6 +53,9 @@ def create_app(ayarlar=None):
     app.jinja_env.filters["tl"] = tl_yaz
     app.jinja_env.filters["tl_girdi"] = tl_girdi
     app.jinja_env.filters["tarih"] = tarih_yaz
+    app.jinja_env.filters["tel"] = tel_yaz
+    app.jinja_env.globals.update(KANALLAR=KANALLAR, TALEP_DURUMLARI=TALEP_DURUMLARI,
+                                 SATIS_DURUMLARI=SATIS_DURUMLARI, ODEME_SEKILLERI=ODEME_SEKILLERI)
     app.jinja_env.globals["csrf_token"] = csrf_token
 
     @app.before_request
@@ -98,9 +102,11 @@ def create_app(ayarlar=None):
         return render_template("hata.html", baslik="Bir hata oluştu",
                                mesaj="Beklenmeyen bir sorun oldu. Tekrar deneyin; sürerse yöneticiye haber verin."), 500
 
-    from . import ana, auth, urunler, yonetim
+    from . import ana, auth, satislar, talepler, urunler, yonetim
     app.register_blueprint(auth.bp)
     app.register_blueprint(ana.bp)
+    app.register_blueprint(talepler.bp)
+    app.register_blueprint(satislar.bp)
     app.register_blueprint(urunler.bp)
     app.register_blueprint(yonetim.bp)
 

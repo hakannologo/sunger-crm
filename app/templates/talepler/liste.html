@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import sayfalama %}
+{% block baslik %}Talepler{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Talepler</h1>
+    <p class="soluk">{{ sayfa.toplam }} talep</p>
+  </div>
+  <div class="baslik-dugmeler"><a class="dugme" href="{{ url_for('talepler.yeni') }}">+ Yeni talep</a></div>
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan alan-genis">
+      <label for="f-q">Ara</label>
+      <input id="f-q" name="q" type="search" value="{{ f.get('q', '') }}" placeholder="Ad, telefon veya kullanıcı adı">
+    </div>
+    <div class="alan">
+      <label for="f-durum">Durum</label>
+      <select id="f-durum" name="durum">
+        <option value="acik" {{ 'selected' if f.get('durum', 'acik') == 'acik' }}>Açık (fiyat verildi / düşünüyor)</option>
+        {% for k, ad in durumlar.items() %}<option value="{{ k }}" {{ 'selected' if f.get('durum') == k }}>{{ ad }}</option>{% endfor %}
+        <option value="tumu" {{ 'selected' if f.get('durum') == 'tumu' }}>Tümü</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-kanal">Kanal</label>
+      <select id="f-kanal" name="kanal">
+        <option value="">Tümü</option>
+        {% for k, ad in kanallar.items() %}<option value="{{ k }}" {{ 'selected' if f.get('kanal') == k }}>{{ ad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-kim">Kimin</label>
+      <select id="f-kim" name="kim">
+        <option value="ben" {{ 'selected' if f.get('kim', 'ben') == 'ben' }}>Benim taleplerim</option>
+        <option value="hepsi" {{ 'selected' if f.get('kim') == 'hepsi' }}>Herkes</option>
+        {% for k in kullanicilar %}<option value="{{ k.id }}" {{ 'selected' if f.get('kim') == k.id|string }}>{{ k.ad_soyad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan alan-dugme"><button type="submit" class="dugme">Filtrele</button></div>
+  </div>
+</form>
+
+<div class="kart tablo-kart">
+  {% if talepler %}
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead><tr><th>Kişi</th><th class="gizle-mobil">Araç / ürünler</th><th class="sag">Fiyat</th><th>Durum</th><th class="gizle-mobil">Hatırlatma</th></tr></thead>
+    <tbody>
+      {% for t in talepler %}
+      <tr data-href="{{ url_for('talepler.detay', talep_id=t.id) }}">
+        <td>
+          <a href="{{ url_for('talepler.detay', talep_id=t.id) }}" class="urun-adi">{{ t.ad or (t.telefon|tel) or ('@' ~ t.sosyal) }}</a>
+          <div class="alt-bilgi"><span class="kanal-nokta kanal-{{ t.kanal }}"></span>{{ kanallar[t.kanal] }} · {{ t.olusturma|tarih }}{% if f.get('kim') != 'ben' %} · {{ t.kullanici }}{% endif %}</div>
+        </td>
+        <td class="gizle-mobil">{{ ' '.join([t.marka or '', t.model or ''])|trim or '—' }}<div class="alt-bilgi">{{ (t.urunler or '')|truncate(70) }}</div></td>
+        <td class="sag tutar">{{ t.toplam_kurus|tl }}</td>
+        <td><span class="rozet durum-{{ t.durum }}">{{ durumlar[t.durum] }}</span></td>
+        <td class="gizle-mobil nowrap {{ 'gecikti-yazi' if t.hatirlatma and t.hatirlatma < bugun }}">{{ t.hatirlatma|tarih(false) if t.hatirlatma else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ sayfalama(sayfa) }}
+  {% else %}
+  <div class="bos-durum">
+    <p><strong>Bu filtrelere uyan talep yok.</strong></p>
+    <p><a class="dugme" href="{{ url_for('talepler.yeni') }}">+ Yeni talep</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

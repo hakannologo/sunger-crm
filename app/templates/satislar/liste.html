@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import sayfalama %}
+{% block baslik %}Satışlar{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Satışlar</h1>
+    <p class="soluk">{{ sayfa.toplam }} satış · Yeni satış, bir talepten “Satışa çevir” ile oluşur.</p>
+  </div>
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan alan-genis">
+      <label for="f-q">Ara</label>
+      <input id="f-q" name="q" type="search" value="{{ f.get('q', '') }}" placeholder="Müşteri, telefon veya takip no">
+    </div>
+    <div class="alan">
+      <label for="f-durum">Durum</label>
+      <select id="f-durum" name="durum">
+        <option value="acik" {{ 'selected' if f.get('durum', 'acik') == 'acik' }}>Açık (hazırlanıyor / kargoda)</option>
+        {% for k, ad in durumlar.items() %}<option value="{{ k }}" {{ 'selected' if f.get('durum') == k }}>{{ ad }}</option>{% endfor %}
+        <option value="tumu" {{ 'selected' if f.get('durum') == 'tumu' }}>Tümü</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-odeme">Ödeme</label>
+      <select id="f-odeme" name="odeme">
+        <option value="">Tümü</option>
+        {% for k, ad in odemeler.items() %}<option value="{{ k }}" {{ 'selected' if f.get('odeme') == k }}>{{ ad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan alan-dugme"><button type="submit" class="dugme">Filtrele</button></div>
+  </div>
+</form>
+
+<div class="kart tablo-kart">
+  {% if satislar %}
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead><tr><th>Müşteri</th><th class="gizle-mobil">Ürünler</th><th class="sag">Tutar</th><th>Ödeme</th><th>Durum</th></tr></thead>
+    <tbody>
+      {% for s in satislar %}
+      <tr data-href="{{ url_for('satislar.satis_detay', satis_id=s.id) }}">
+        <td><a class="urun-adi" href="{{ url_for('satislar.satis_detay', satis_id=s.id) }}">{{ s.musteri }}</a>
+          <div class="alt-bilgi">#{{ s.id }} · {{ s.olusturma|tarih }} · {{ s.kullanici }}</div></td>
+        <td class="gizle-mobil">{{ (s.urunler or '')|truncate(70) }}</td>
+        <td class="sag tutar">{{ s.toplam_kurus|tl }}</td>
+        <td class="nowrap">{{ odemeler[s.odeme] }}</td>
+        <td><span class="rozet satis-{{ s.durum }}">{{ durumlar[s.durum] }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ sayfalama(sayfa) }}
+  {% else %}
+  <div class="bos-durum"><p><strong>Bu filtrelere uyan satış yok.</strong></p>
+    <p class="soluk">Satış oluşturmak için bir talebi açıp “Satışa çevir”e basın.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

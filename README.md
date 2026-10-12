@@ -15,8 +15,17 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
 - **Marka / model** (yönetici): 30 marka, 108 model hazır; ekleme, yeniden adlandırma, silme
 - **İşlem kaydı** (yönetici): kim, ne zaman, neyi değiştirdi
 
-Sıradaki aşamalar: müşteri ve araç kayıtları, satış/sipariş ve kargo, ödeme, kapıda ödeme takibi,
-cari hesap, alacak takvimi, raporlar ve Excel'e aktarma.
+## 2. aşama
+
+- **Talepler:** arayan/yazan kişinin kanalı (telefon, WhatsApp, Instagram, Facebook), aracı, istediği ürünler
+  ve verilen fiyat; aynı numara daha önce sorduysa geçmişi gösterilir
+- **Hatırlatma:** "Fiyat verildi" talepler ertesi gün ana sayfada "Bugün dönüş yapılacaklar"a düşer
+  (talebi giren kullanıcıda; yönetici hepsini görür), not + yeni tarih ile takip edilir
+- **Satışa çevirme:** tek tuşla; müşteri kaydı kendiliğinden oluşur; ödeme şekli, Aras Kargo takip no
+- **Satışlar** (hazırlanıyor → kargoda → teslim / iade), **Müşteriler** (kart, WhatsApp, geçmiş)
+- **Talep raporu** (yönetici): kanal ve kullanıcı bazında talep, satış, dönüş oranı, olmama sebepleri
+
+Sıradaki aşama: tahsilat takibi (kapıda ödeme, havale), cari hesap, alacak takvimi, Excel'e aktarma.
 
 ## cPanel'e kurulum — CGI yöntemi (önerilen)
 

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}{{ 'Talebi düzenle' if t else 'Yeni talep' }}{% endblock %}
+{% block icerik %}
+{% if t %}<a class="geri" href="{{ url_for('talepler.detay', talep_id=t.id) }}">‹ Talep #{{ t.id }}</a>{% endif %}
+<div class="sayfa-baslik"><h1>{{ 'Talebi düzenle' if t else 'Yeni talep' }}</h1></div>
+
+<form method="post" class="talep-form" id="talep-form" data-urun-api="{{ url_for('talepler.api_urunler') }}"
+      data-kisi-api="{{ url_for('talepler.api_kisi') }}" data-talep-id="{{ t.id if t else '' }}">
+  {{ csrf() }}
+
+  <div class="kart">
+    <h2>1. Nereden geldi?</h2>
+    <div class="secenek-grubu{{ ' hatali' if hatalar.kanal }}" role="radiogroup">
+      {% for anahtar, ad in kanallar.items() %}
+      <label class="secenek kanal-{{ anahtar }}">
+        <input type="radio" name="kanal" value="{{ anahtar }}" {{ 'checked' if v.kanal == anahtar }} required>
+        <span>{{ ad }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% if hatalar.kanal %}<div class="alan-hata">{{ hatalar.kanal }}</div>{% endif %}
+  </div>
+
+  <div class="kart">
+    <h2>2. Kim?</h2>
+    <div class="satir-alanlar">
+      <div class="alan{{ ' hatali' if hatalar.telefon }}">
+        <label for="a-telefon">Telefon</label>
+        <input id="a-telefon" name="telefon" value="{{ v.telefon_ham }}" inputmode="tel" placeholder="0532 123 45 67" autocomplete="off" autofocus>
+        {% if hatalar.telefon %}<div class="alan-hata">{{ hatalar.telefon }}</div>{% endif %}
+      </div>
+      <div class="alan{{ ' hatali' if hatalar.ad }}">
+        <label for="a-ad">Ad soyad</label>
+        <input id="a-ad" name="ad" value="{{ v.ad or '' }}" autocomplete="off">
+        {% if hatalar.ad %}<div class="alan-hata">{{ hatalar.ad }}</div>{% endif %}
+      </div>
+      <div class="alan">
+        <label for="a-sosyal">Instagram / Facebook adı</label>
+        <input id="a-sosyal" name="sosyal" value="{{ v.sosyal or '' }}" placeholder="@kullaniciadi" autocomplete="off" autocapitalize="none">
+      </div>
+    </div>
+    <div class="kisi-gecmis" id="kisi-gecmis" hidden></div>
+  </div>
+
+  <div class="kart">
+    <h2>3. Araç ve ürünler</h2>
+    <div class="satir-alanlar">
+      <div class="alan">
+        <label for="a-marka">Marka</label>
+        <select id="a-marka" name="marka_id" data-model-hedef="a-model">
+          <option value="">Seçin</option>
+          {% for m in markalar %}<option value="{{ m.id }}" {{ 'selected' if v.marka_id == m.id }}>{{ m.ad }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="alan">
+        <label for="a-model">Model</label>
+        <select id="a-model" name="model_id" {{ 'disabled' if not modeller }} data-bos-etiket="Tüm modeller">
+          <option value="">{{ 'Tüm modeller' if modeller else 'Önce marka seçin' }}</option>
+          {% for mo in modeller %}<option value="{{ mo.id }}" {{ 'selected' if v.model_id == mo.id }}>{{ mo.ad }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="alan">
+        <label for="a-arac_notu">Araç notu</label>
+        <input id="a-arac_notu" name="arac_notu" value="{{ v.arac_notu or '' }}" placeholder="ör. 2015 model, 7 kişilik">
+      </div>
+      <div class="alan">
+        <label for="a-fiyat_tipi">Fiyat</label>
+        <select id="a-fiyat_tipi" name="fiyat_tipi">
+          <option value="perakende" {{ 'selected' if v.fiyat_tipi == 'perakende' }}>Perakende</option>
+          <option value="toptan" {{ 'selected' if v.fiyat_tipi == 'toptan' }}>Toptan</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="urun-secici">
+      <div class="urun-secici-ust">
+        <input type="search" id="urun-ara" placeholder="Ürün ara (ad veya kod) — ya da yukarıdan araç seçin" autocomplete="off">
+      </div>
+      <div class="urun-oneriler" id="urun-oneriler" aria-live="polite">
+        <p class="soluk kucuk">Araç seçince uyumlu ürünler burada listelenir. Tıklayınca talebe eklenir.</p>
+      </div>
+    </div>
+
+    <div class="tablo-sarmal">
+    <table class="tablo kalem-tablosu{{ ' hatali-cerceve' if hatalar.kalemler }}">
+      <thead><tr><th>Ürün</th><th class="sag">Adet</th><th class="sag">Birim fiyat (₺)</th><th class="sag">Tutar</th><th></th></tr></thead>
+      <tbody id="kalemler">
+        {% for k in kalemler %}
+        <tr>
+          <td><input type="hidden" name="k_urun_id" value="{{ k.urun_id or '' }}"><input name="k_urun_adi" value="{{ k.urun_adi }}" class="kalem-ad" aria-label="Ürün adı"></td>
+          <td class="sag"><input name="k_adet" value="{{ k.adet }}" inputmode="numeric" class="kalem-adet" aria-label="Adet"></td>
+          <td class="sag"><input name="k_fiyat" value="{{ k.birim_kurus|tl_girdi }}" inputmode="decimal" class="kalem-fiyat tutar-girdi" aria-label="Birim fiyat"></td>
+          <td class="sag tutar kalem-tutar"></td>
+          <td class="sag"><button type="button" class="baglanti-dugme tehlike" data-kalem-sil>Çıkar</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3"><button type="button" class="baglanti-dugme" id="elle-ekle">+ Listede olmayan ürün ekle</button></td>
+          <td class="sag tutar"><strong id="genel-toplam">0,00 ₺</strong></td><td></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+    {% if hatalar.kalemler %}<div class="alan-hata">{{ hatalar.kalemler }}</div>{% endif %}
+    <template id="kalem-sablon">
+      <tr>
+        <td><input type="hidden" name="k_urun_id" value=""><input name="k_urun_adi" class="kalem-ad" aria-label="Ürün adı"></td>
+        <td class="sag"><input name="k_adet" value="1" inputmode="numeric" class="kalem-adet" aria-label="Adet"></td>
+        <td class="sag"><input name="k_fiyat" inputmode="decimal" class="kalem-fiyat tutar-girdi" aria-label="Birim fiyat"></td>
+        <td class="sag tutar kalem-tutar"></td>
+        <td class="sag"><button type="button" class="baglanti-dugme tehlike" data-kalem-sil>Çıkar</button></td>
+      </tr>
+    </template>
+  </div>
+
+  <div class="kart">
+    <h2>4. Sonuç ve hatırlatma</h2>
+    <div class="satir-alanlar">
+      <div class="alan">
+        <label for="a-durum">Durum</label>
+        <select id="a-durum" name="durum" data-durum-sec>
+          <option value="fiyat_verildi" {{ 'selected' if v.durum == 'fiyat_verildi' }}>Fiyat verildi</option>
+          <option value="dusunuyor" {{ 'selected' if v.durum == 'dusunuyor' }}>Düşünüyor</option>
+          <option value="olmadi" {{ 'selected' if v.durum == 'olmadi' }}>Olmadı</option>
+        </select>
+      </div>
+      <div class="alan{{ ' hatali' if hatalar.hatirlatma }}" data-acik-alan>
+        <label for="a-hatirlatma">Hatırlatma tarihi</label>
+        <input id="a-hatirlatma" type="date" name="hatirlatma" value="{{ v.hatirlatma or yarin }}">
+        {% if hatalar.hatirlatma %}<div class="alan-hata">{{ hatalar.hatirlatma }}</div>
+        {% else %}<div class="alan-ipucu">Bu gün ana sayfanda dönüş listesine düşer.</div>{% endif %}
+      </div>
+      <div class="alan" data-kayip-alan hidden>
+        <label for="a-kayip">Neden olmadı?</label>
+        <select id="a-kayip" name="kayip_sebebi">
+          {% for s in kayip_sebepleri %}<option {{ 'selected' if v.kayip_sebebi == s }}>{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="alan">
+      <label for="a-notlar">Not</label>
+      <input id="a-notlar" name="notlar" value="{{ v.notlar or '' }}" placeholder="ör. akşam arayacak, eşine soracak">
+    </div>
+    <div class="form-alt">
+      <button type="submit" class="dugme dugme-buyuk">Kaydet</button>
+      {% if not t %}<button type="submit" name="sonra" value="yeni" class="dugme dugme-ikincil">Kaydet ve yeni talep</button>{% endif %}
+      <a href="{{ url_for('talepler.detay', talep_id=t.id) if t else url_for('ana.panel') }}" class="dugme dugme-ikincil">Vazgeç</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

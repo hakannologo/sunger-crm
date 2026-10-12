@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import alan, csrf %}
+{% block baslik %}{{ m.ad }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('satislar.musteri_liste') }}">‹ Müşteriler</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>{{ m.ad }}</h1>
+    <p class="soluk">{% if m.tip == 'toptan' %}<span class="rozet rozet-toptan">Toptan</span> {{ m.firma_adi or '' }}{% else %}Bireysel{% endif %}
+      · {{ satislar|length }} satış · {{ ciro|tl }}</p>
+  </div>
+  <div class="baslik-dugmeler">
+    {% if m.telefon %}
+      <a class="dugme dugme-ikincil" href="tel:0{{ m.telefon }}">Ara</a>
+      <a class="dugme dugme-ikincil" href="{{ wa }}" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="dugme" href="{{ url_for('talepler.yeni', tel=m.telefon) }}">+ Yeni talep</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="iki-sutun">
+  <div>
+    <div class="kart tablo-kart">
+      <div class="kart-ic"><h2>Satışlar</h2></div>
+      {% if satislar %}
+      <div class="tablo-sarmal"><table class="tablo">
+        <thead><tr><th>Tarih</th><th>Ürünler</th><th class="sag">Tutar</th><th>Durum</th></tr></thead>
+        <tbody>
+          {% for s in satislar %}
+          <tr data-href="{{ url_for('satislar.satis_detay', satis_id=s.id) }}">
+            <td class="nowrap"><a href="{{ url_for('satislar.satis_detay', satis_id=s.id) }}">{{ s.olusturma|tarih(false) }}</a></td>
+            <td>{{ (s.urunler or '')|truncate(60) }}<div class="alt-bilgi">{{ odemeler[s.odeme] }}</div></td>
+            <td class="sag tutar">{{ s.toplam_kurus|tl }}</td>
+            <td><span class="rozet satis-{{ s.durum }}">{{ durumlar[s.durum] }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<div class="kart-ic"><p class="soluk">Satış yok.</p></div>{% endif %}
+    </div>
+
+    <div class="kart tablo-kart">
+      <div class="kart-ic"><h2>Talepler</h2></div>
+      {% if talepler %}
+      <div class="tablo-sarmal"><table class="tablo">
+        <thead><tr><th>Tarih</th><th>Araç / ürünler</th><th class="sag">Fiyat</th><th>Durum</th></tr></thead>
+        <tbody>
+          {% for t in talepler %}
+          <tr data-href="{{ url_for('talepler.detay', talep_id=t.id) }}">
+            <td class="nowrap"><a href="{{ url_for('talepler.detay', talep_id=t.id) }}">{{ t.olusturma|tarih(false) }}</a><div class="alt-bilgi">{{ kanallar[t.kanal] }}</div></td>
+            <td>{{ ' '.join([t.marka or '', t.model or ''])|trim or '—' }}<div class="alt-bilgi">{{ (t.urunler or '')|truncate(60) }}</div></td>
+            <td class="sag tutar">{{ t.toplam_kurus|tl }}</td>
+            <td><span class="rozet durum-{{ t.durum }}">{{ talep_durumlari[t.durum] }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<div class="kart-ic"><p class="soluk">Talep yok.</p></div>{% endif %}
+    </div>
+  </div>
+
+  <form method="post" class="kart">
+    {{ csrf() }}
+    <h2>Bilgiler</h2>
+    {{ alan('ad', 'Ad soyad', m.ad, hatalar=hatalar, zorunlu=true) }}
+    <div class="satir-alanlar">
+      {{ alan('telefon', 'Telefon', m.telefon|tel if m.telefon and m.telefon.isdigit() else (m.telefon or ''), hatalar=hatalar, ozellikler='inputmode="tel"') }}
+      {{ alan('sosyal', 'Instagram / Facebook', m.sosyal or '', hatalar=hatalar) }}
+    </div>
+    <div class="alan">
+      <label for="a-tip">Tip</label>
+      <select id="a-tip" name="tip">
+        <option value="bireysel" {{ 'selected' if m.tip == 'bireysel' }}>Bireysel</option>
+        <option value="toptan" {{ 'selected' if m.tip == 'toptan' }}>Toptan / esnaf</option>
+      </select>
+    </div>
+    {{ alan('firma_adi', 'Firma adı', m.firma_adi or '', hatalar=hatalar) }}
+    <div class="satir-alanlar">
+      {{ alan('vergi_no', 'Vergi no', m.vergi_no or '', hatalar=hatalar) }}
+      {{ alan('vergi_dairesi', 'Vergi dairesi', m.vergi_dairesi or '', hatalar=hatalar) }}
+    </div>
+    {{ alan('sehir', 'İl / ilçe', m.sehir or '', hatalar=hatalar) }}
+    <div class="alan">
+      <label for="a-adres">Adres</label>
+      <textarea id="a-adres" name="adres" rows="3">{{ m.adres or '' }}</textarea>
+    </div>
+    {{ alan('notlar', 'Not', m.notlar or '', hatalar=hatalar) }}
+    <div class="form-alt"><button type="submit" class="dugme">Kaydet</button></div>
+  </form>
+</div>
+{% endblock %}

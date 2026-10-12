@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import sayfalama %}
+{% block baslik %}Müşteriler{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Müşteriler</h1>
+    <p class="soluk">{{ sayfa.toplam }} müşteri · Müşteri kaydı, bir talep satışa çevrilince kendiliğinden oluşur.</p>
+  </div>
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan alan-genis">
+      <label for="f-q">Ara</label>
+      <input id="f-q" name="q" type="search" value="{{ f.get('q', '') }}" placeholder="Ad, firma, telefon, şehir">
+    </div>
+    <div class="alan">
+      <label for="f-tip">Tip</label>
+      <select id="f-tip" name="tip">
+        <option value="">Tümü</option>
+        <option value="bireysel" {{ 'selected' if f.get('tip') == 'bireysel' }}>Bireysel</option>
+        <option value="toptan" {{ 'selected' if f.get('tip') == 'toptan' }}>Toptan / esnaf</option>
+      </select>
+    </div>
+    <div class="alan alan-dugme"><button type="submit" class="dugme">Filtrele</button></div>
+  </div>
+</form>
+
+<div class="kart tablo-kart">
+  {% if musteriler %}
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead><tr><th>Müşteri</th><th>Telefon</th><th class="sag gizle-mobil">Satış</th><th class="sag">Toplam</th><th class="gizle-mobil">Son satış</th></tr></thead>
+    <tbody>
+      {% for m in musteriler %}
+      <tr data-href="{{ url_for('satislar.musteri_detay', musteri_id=m.id) }}">
+        <td><a class="urun-adi" href="{{ url_for('satislar.musteri_detay', musteri_id=m.id) }}">{{ m.ad }}</a>
+          <div class="alt-bilgi">{% if m.tip == 'toptan' %}<span class="rozet rozet-toptan">Toptan</span> {{ m.firma_adi or '' }}{% else %}Bireysel{% endif %}{% if m.sehir %} · {{ m.sehir }}{% endif %}</div></td>
+        <td class="nowrap">{{ m.telefon|tel }}</td>
+        <td class="sag gizle-mobil">{{ m.satis_sayisi }}</td>
+        <td class="sag tutar">{{ m.ciro|tl }}</td>
+        <td class="gizle-mobil nowrap">{{ m.son_satis|tarih(false) if m.son_satis else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ sayfalama(sayfa) }}
+  {% else %}
+  <div class="bos-durum"><p><strong>Müşteri bulunamadı.</strong></p></div>
+  {% endif %}
+</div>
+{% endblock %}

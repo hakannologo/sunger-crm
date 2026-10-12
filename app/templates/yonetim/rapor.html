@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block baslik %}Talep raporu{% endblock %}
+{% macro oran(satis, talep) -%}{{ '%d' % ((satis or 0) * 100 / talep) if talep else 0 }}%{%- endmacro %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Talep raporu</h1>
+    <p class="soluk">{{ bas|tarih(false) }} – {{ bit|tarih(false) }} arasında gelen talepler: {{ toplam.talep }} talep, {{ toplam.satis }} satış ({{ oran(toplam.satis, toplam.talep) }}), {{ toplam.ciro|tl }}.</p>
+  </div>
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan"><label for="r-bas">Başlangıç</label><input id="r-bas" type="date" name="bas" value="{{ bas }}"></div>
+    <div class="alan"><label for="r-bit">Bitiş</label><input id="r-bit" type="date" name="bit" value="{{ bit }}"></div>
+    <div class="alan alan-dugme"><button type="submit" class="dugme">Göster</button></div>
+  </div>
+</form>
+
+<div class="kart tablo-kart">
+  <div class="kart-ic"><h2>Kanallara göre</h2></div>
+  {% if kanal %}
+  <div class="tablo-sarmal"><table class="tablo">
+    <thead><tr><th>Kanal</th><th class="sag">Talep</th><th class="sag">Satış</th><th class="sag">Dönüş oranı</th><th class="sag gizle-mobil">Olmadı</th><th class="sag gizle-mobil">Açık</th><th class="sag">Satış tutarı</th></tr></thead>
+    <tbody>
+      {% for r in kanal %}
+      <tr><td><span class="kanal-nokta kanal-{{ r.kanal }}"></span>{{ kanallar[r.kanal] }}</td><td class="sag">{{ r.talep }}</td><td class="sag">{{ r.satis or 0 }}</td>
+        <td class="sag"><span class="oran-cubuk"><span style="width: {{ oran(r.satis, r.talep) }}"></span></span>{{ oran(r.satis, r.talep) }}</td>
+        <td class="sag gizle-mobil">{{ r.olmadi or 0 }}</td><td class="sag gizle-mobil">{{ r.acik or 0 }}</td><td class="sag tutar">{{ r.ciro|tl }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<div class="kart-ic"><p class="soluk">Bu tarihlerde talep yok.</p></div>{% endif %}
+</div>
+
+<div class="kart tablo-kart">
+  <div class="kart-ic"><h2>Kullanıcılara göre</h2></div>
+  {% if kisi %}
+  <div class="tablo-sarmal"><table class="tablo">
+    <thead><tr><th>Kullanıcı</th><th class="sag">Talep</th><th class="sag">Satış</th><th class="sag">Dönüş oranı</th><th class="sag gizle-mobil">Olmadı</th><th class="sag gizle-mobil">Açık</th><th class="sag">Satış tutarı</th></tr></thead>
+    <tbody>
+      {% for r in kisi %}
+      <tr><td>{{ r.ad_soyad }}</td><td class="sag">{{ r.talep }}</td><td class="sag">{{ r.satis or 0 }}</td>
+        <td class="sag"><span class="oran-cubuk"><span style="width: {{ oran(r.satis, r.talep) }}"></span></span>{{ oran(r.satis, r.talep) }}</td>
+        <td class="sag gizle-mobil">{{ r.olmadi or 0 }}</td><td class="sag gizle-mobil">{{ r.acik or 0 }}</td><td class="sag tutar">{{ r.ciro|tl }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<div class="kart-ic"><p class="soluk">Bu tarihlerde talep yok.</p></div>{% endif %}
+</div>
+
+{% if sebep %}
+<div class="kart">
+  <h2>Satışa dönmeme sebepleri</h2>
+  <ul class="sebep-listesi">
+    {% for r in sebep %}<li><span>{{ r.sebep }}</span><strong>{{ r.n }}</strong></li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import alan, csrf %}
+{% block baslik %}Satışa çevir{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('talepler.detay', talep_id=t.id) }}">‹ Talep #{{ t.id }}</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>Satışa çevir</h1>
+    <p class="soluk">Ürünler ve fiyatlar talepten geliyor. Değiştirmek için önce <a href="{{ url_for('talepler.duzenle', talep_id=t.id) }}">talebi düzenleyin</a>.</p>
+  </div>
+</div>
+
+<div class="iki-sutun">
+  <form method="post" class="kart">
+    {{ csrf() }}
+    <h2>Müşteri ve teslimat</h2>
+    {% if mevcut %}<p class="bilgi-kart kucuk-not">Bu telefon numarası kayıtlı müşteriye ait: <strong>{{ mevcut.ad }}</strong>. Bilgileri güncellenecek.</p>{% endif %}
+    <div class="satir-alanlar">
+      {{ alan('ad', 'Ad soyad', v.ad, hatalar=hatalar, zorunlu=true) }}
+      {{ alan('telefon', 'Telefon', v.telefon|tel if v.telefon and v.telefon.isdigit() else v.telefon, hatalar=hatalar, zorunlu=true, ozellikler='inputmode="tel"') }}
+    </div>
+    <div class="satir-alanlar">
+      <div class="alan">
+        <label for="a-tip">Müşteri tipi</label>
+        <select id="a-tip" name="tip">
+          <option value="bireysel" {{ 'selected' if v.tip == 'bireysel' }}>Bireysel</option>
+          <option value="toptan" {{ 'selected' if v.tip == 'toptan' }}>Toptan / esnaf</option>
+        </select>
+      </div>
+      {{ alan('firma_adi', 'Firma adı', v.firma_adi, hatalar=hatalar, ipucu='Toptan müşteri için.') }}
+    </div>
+    {{ alan('sehir', 'İl / ilçe', v.sehir, hatalar=hatalar) }}
+    <div class="alan{{ ' hatali' if hatalar.adres }}">
+      <label for="a-adres">Teslimat adresi <span class="zorunlu">*</span></label>
+      <textarea id="a-adres" name="adres" rows="3" required>{{ v.adres }}</textarea>
+      {% if hatalar.adres %}<div class="alan-hata">{{ hatalar.adres }}</div>{% endif %}
+    </div>
+
+    <h2 class="ara-baslik">Ödeme ve kargo</h2>
+    <div class="secenek-grubu{{ ' hatali' if hatalar.odeme }}">
+      {% for k, ad in odemeler.items() %}
+      <label class="secenek"><input type="radio" name="odeme" value="{{ k }}" {{ 'checked' if v.odeme == k }} required><span>{{ ad }}</span></label>
+      {% endfor %}
+    </div>
+    {% if hatalar.odeme %}<div class="alan-hata">{{ hatalar.odeme }}</div>{% endif %}
+    <p class="soluk kucuk">Kargo: Aras Kargo, karşı ödemeli.</p>
+    {{ alan('takip_no', 'Aras takip numarası', v.takip_no, hatalar=hatalar, ipucu='Kargoya verince de girebilirsiniz; girilince durum "Kargoda" olur.') }}
+    {{ alan('notlar', 'Not', v.notlar, hatalar=hatalar) }}
+    <div class="form-alt">
+      <button type="submit" class="dugme dugme-buyuk">Satışı oluştur</button>
+      <a class="dugme dugme-ikincil" href="{{ url_for('talepler.detay', talep_id=t.id) }}">Vazgeç</a>
+    </div>
+  </form>
+
+  <div class="kart tablo-kart">
+    <div class="kart-ic"><h2>Sipariş</h2></div>
+    <div class="tablo-sarmal">
+    <table class="tablo">
+      <thead><tr><th>Ürün</th><th class="sag">Adet</th><th class="sag">Tutar</th></tr></thead>
+      <tbody>
+        {% for k in kalemler %}
+        <tr><td>{{ k.urun_adi }}</td><td class="sag">{{ k.adet }}</td><td class="sag tutar">{{ (k.adet * k.birim_kurus)|tl }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="2" class="sag"><strong>Toplam</strong></td><td class="sag tutar"><strong>{{ t.toplam_kurus|tl }}</strong></td></tr></tfoot>
+    </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

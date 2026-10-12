@@ -1,88 +1,76 @@
 {% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
 {% block baslik %}Ana sayfa{% endblock %}
 {% block icerik %}
 <div class="sayfa-baslik">
   <div>
     <h1>Merhaba, {{ kullanici.ad_soyad.split(' ')[0] }}</h1>
-    <p class="soluk">Araca uygun süngeri bulmak için marka ve modeli seçin ya da ürün arayın.</p>
+    <p class="soluk">{% if hatirlatmalar %}Bugün {{ hatirlatmalar|length }} kişiye dönüş yapılacak.{% else %}Bugün dönüş yapılacak kimse yok.{% endif %}</p>
+  </div>
+  <div class="baslik-dugmeler">
+    <a class="dugme dugme-buyuk" href="{{ url_for('talepler.yeni') }}">+ Yeni talep</a>
   </div>
 </div>
 
-<form class="kart hizli-arama" method="get" action="{{ url_for('urunler.liste') }}">
-  <h2>Ürün bul</h2>
-  <div class="satir-alanlar">
-    <div class="alan">
-      <label for="p-marka">Marka</label>
-      <select id="p-marka" name="marka" data-model-hedef="p-model">
-        <option value="">Tüm markalar</option>
-        {% for m in markalar %}<option value="{{ m.id }}">{{ m.ad }}</option>{% endfor %}
-        <option value="genel">Genel ürünler (araç bağımsız)</option>
-      </select>
-    </div>
-    <div class="alan">
-      <label for="p-model">Model</label>
-      <select id="p-model" name="model" disabled>
-        <option value="">Önce marka seçin</option>
-      </select>
-    </div>
-    <div class="alan alan-genis">
-      <label for="p-q">Ara</label>
-      <input id="p-q" name="q" type="search" placeholder="Ürün adı veya kodu (ör. doblo oturak, SM-FIAT-021)">
-    </div>
-    <div class="alan alan-dugme">
-      <button type="submit" class="dugme">Göster</button>
-    </div>
+<div class="kart">
+  <div class="kart-baslik">
+    <h2>Bugün dönüş yapılacaklar{% if admin %} <span class="soluk kucuk">(tüm kullanıcılar)</span>{% endif %}</h2>
+    <a href="{{ url_for('talepler.liste', kim='ben' if not admin else 'hepsi') }}">Açık talepler →</a>
   </div>
-</form>
+  {% if hatirlatmalar %}
+  <ul class="hatirlatma-listesi">
+    {% for t in hatirlatmalar %}
+    {% set gecikti = t.hatirlatma < bugun %}
+    <li class="{{ 'gecikti' if gecikti }}">
+      <div class="hat-ana">
+        <a class="hat-kisi" href="{{ url_for('talepler.detay', talep_id=t.id) }}">{{ t.ad or (t.telefon|tel) or ('@' ~ t.sosyal) }}</a>
+        <span class="rozet rozet-kanal kanal-{{ t.kanal }}">{{ KANALLAR[t.kanal] }}</span>
+        {% if gecikti %}<span class="rozet rozet-kirmizi">{{ t.hatirlatma|tarih(false) }} — gecikti</span>{% endif %}
+        <div class="alt-bilgi">
+          {{ ' '.join([t.marka or '', t.model or ''])|trim or 'Araç belirtilmedi' }} · {{ t.urunler or 'ürün yok' }} · <strong>{{ t.toplam_kurus|tl }}</strong>
+          · {{ TALEP_DURUMLARI[t.durum] }}{% if admin %} · {{ t.kullanici }}{% endif %}
+        </div>
+        {% if t.son_not %}<div class="alt-bilgi son-not">Son not: {{ t.son_not|truncate(90) }}</div>{% endif %}
+      </div>
+      <div class="hat-dugmeler">
+        {% if t.telefon %}
+          <a class="dugme dugme-kucuk dugme-ikincil" href="tel:0{{ t.telefon }}">Ara</a>
+          <a class="dugme dugme-kucuk dugme-ikincil" href="https://wa.me/90{{ t.telefon }}" target="_blank" rel="noopener">WhatsApp</a>
+        {% endif %}
+        <a class="dugme dugme-kucuk" href="{{ url_for('talepler.detay', talep_id=t.id) }}#takip">Not / sonuç gir</a>
+        <form method="post" action="{{ url_for('talepler.ertele', talep_id=t.id) }}">
+          {{ csrf() }}<input type="hidden" name="gun" value="1">
+          <button type="submit" class="dugme dugme-kucuk dugme-ikincil" title="Yarına ertele">Yarın</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="bos-durum kucuk-bos">
+    <p class="soluk">Hepsi tamam. {% if sayilar.ileri_hatirlatma %}İleri tarihli {{ sayilar.ileri_hatirlatma }} hatırlatma var.{% endif %}</p>
+  </div>
+  {% endif %}
+</div>
 
 <div class="sayaclar">
-  <a class="sayac" href="{{ url_for('urunler.liste') }}">
-    <span class="sayac-deger">{{ sayilar.urun }}</span>
-    <span class="sayac-etiket">Aktif ürün</span>
+  <a class="sayac" href="{{ url_for('talepler.liste', durum='tumu', kim='ben' if not admin else 'hepsi') }}">
+    <span class="sayac-deger">{{ sayilar.bugun_talep }}</span>
+    <span class="sayac-etiket">Bugün gelen talep</span>
   </a>
-  <a class="sayac" href="{{ url_for('yonetim.markalar') if kullanici.rol == 'admin' else url_for('urunler.liste') }}">
-    <span class="sayac-deger">{{ sayilar.marka }}</span>
-    <span class="sayac-etiket">Marka · {{ sayilar.model }} model</span>
+  <a class="sayac" href="{{ url_for('talepler.liste', kim='ben' if not admin else 'hepsi') }}">
+    <span class="sayac-deger">{{ sayilar.acik_talep }}</span>
+    <span class="sayac-etiket">Açık talep (fiyat verildi / düşünüyor)</span>
   </a>
-  {% if kullanici.rol == 'admin' %}
+  <a class="sayac {{ 'sayac-uyari' if sayilar.hazirlanan }}" href="{{ url_for('satislar.satis_liste', durum='hazirlaniyor') }}">
+    <span class="sayac-deger">{{ sayilar.hazirlanan }}</span>
+    <span class="sayac-etiket">Hazırlanacak sipariş</span>
+  </a>
+  {% if admin %}
   <a class="sayac {{ 'sayac-uyari' if sayilar.fiyatsiz }}" href="{{ url_for('urunler.toplu_fiyat', fiyat='eksik') }}">
     <span class="sayac-deger">{{ sayilar.fiyatsiz }}</span>
     <span class="sayac-etiket">Fiyatı eksik ürün</span>
   </a>
-  <a class="sayac" href="{{ url_for('yonetim.kullanicilar') }}">
-    <span class="sayac-deger">{{ sayilar.kullanici }}</span>
-    <span class="sayac-etiket">Aktif kullanıcı</span>
-  </a>
   {% endif %}
 </div>
-
-{% if kullanici.rol == 'admin' %}
-  {% if sayilar.fiyatsiz %}
-  <div class="kart bilgi-kart">
-    <strong>{{ sayilar.fiyatsiz }} ürünün fiyatı henüz girilmemiş.</strong>
-    Satış girerken fiyatın otomatik gelmesi için perakende ve toptan fiyatları girin.
-    <a href="{{ url_for('urunler.toplu_fiyat', fiyat='eksik') }}">Toplu fiyat girişine git →</a>
-  </div>
-  {% endif %}
-
-  <div class="kart">
-    <div class="kart-baslik">
-      <h2>Son işlemler</h2>
-      <a href="{{ url_for('yonetim.islem_kaydi') }}">Tümü →</a>
-    </div>
-    {% if son_islemler %}
-    <ul class="islem-listesi">
-      {% for i in son_islemler %}
-      <li>
-        <span class="zaman">{{ i.zaman|tarih }}</span>
-        <span><strong>{{ i.islem }}</strong>{% if i.detay %} — {{ i.detay|truncate(120) }}{% endif %}</span>
-        <span class="kim">{{ i.ad_soyad or 'Sistem' }}</span>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="soluk">Henüz işlem yok.</p>
-    {% endif %}
-  </div>
-{% endif %}
 {% endblock %}

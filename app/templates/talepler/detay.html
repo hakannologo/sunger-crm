@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}Talep #{{ t.id }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('talepler.liste') }}">‹ Talepler</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>{{ t.ad or (t.telefon|tel) or ('@' ~ t.sosyal) }}</h1>
+    <p class="soluk">
+      <span class="rozet rozet-kanal kanal-{{ t.kanal }}">{{ kanallar[t.kanal] }}</span>
+      <span class="rozet durum-{{ t.durum }}">{{ durumlar[t.durum] }}</span>
+      Talep #{{ t.id }} · {{ t.olusturma|tarih }} · {{ t.kullanici }}
+    </p>
+  </div>
+  <div class="baslik-dugmeler">
+    {% if t.telefon %}
+      <a class="dugme dugme-ikincil" href="tel:0{{ t.telefon }}">Ara</a>
+      <a class="dugme dugme-ikincil" href="https://wa.me/90{{ t.telefon }}" target="_blank" rel="noopener">WhatsApp</a>
+    {% endif %}
+    {% if t.durum == 'satis' and t.satis_id %}
+      <a class="dugme" href="{{ url_for('satislar.satis_detay', satis_id=t.satis_id) }}">Satışa git →</a>
+    {% else %}
+      <a class="dugme dugme-ikincil" href="{{ url_for('talepler.duzenle', talep_id=t.id) }}">Düzenle</a>
+      <a class="dugme" href="{{ url_for('satislar.talepten_satis', talep_id=t.id) }}">Satışa çevir</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if t.durum in ('fiyat_verildi', 'dusunuyor') and t.hatirlatma %}
+<div class="kart bilgi-kart {{ 'gecikti-kart' if t.hatirlatma < bugun }}">
+  Hatırlatma: <strong>{{ t.hatirlatma|tarih(false) }}</strong>{% if t.hatirlatma < bugun %} — gecikti{% elif t.hatirlatma == bugun %} — bugün{% endif %}
+</div>
+{% endif %}
+
+<div class="iki-sutun">
+  <div class="kart">
+    <h2>Kişi ve araç</h2>
+    <dl class="bilgi-listesi">
+      <dt>Telefon</dt><dd>{{ (t.telefon|tel) or '—' }}</dd>
+      {% if t.sosyal %}<dt>Sosyal medya</dt><dd>@{{ t.sosyal }}</dd>{% endif %}
+      <dt>Araç</dt><dd>{{ ' '.join([t.marka or '', t.model or ''])|trim or '—' }}{% if t.arac_notu %} <span class="soluk">({{ t.arac_notu }})</span>{% endif %}</dd>
+      <dt>Fiyat tipi</dt><dd>{{ 'Toptan' if t.fiyat_tipi == 'toptan' else 'Perakende' }}</dd>
+      {% if t.kayip_sebebi %}<dt>Olmama sebebi</dt><dd>{{ t.kayip_sebebi }}</dd>{% endif %}
+      {% if t.notlar %}<dt>Not</dt><dd>{{ t.notlar }}</dd>{% endif %}
+      {% if t.musteri_id %}<dt>Müşteri kaydı</dt><dd><a href="{{ url_for('satislar.musteri_detay', musteri_id=t.musteri_id) }}">Müşteri kartını aç →</a></dd>{% endif %}
+    </dl>
+  </div>
+
+  <div class="kart tablo-kart">
+    <div class="kart-ic"><h2>Verilen fiyat</h2></div>
+    <div class="tablo-sarmal">
+    <table class="tablo">
+      <thead><tr><th>Ürün</th><th class="sag">Adet</th><th class="sag">Birim</th><th class="sag">Tutar</th></tr></thead>
+      <tbody>
+        {% for k in kalemler %}
+        <tr>
+          <td>{{ k.urun_adi }}{% if k.kod %}<div class="alt-bilgi kod">{{ k.kod }}</div>{% endif %}</td>
+          <td class="sag">{{ k.adet }}</td>
+          <td class="sag tutar">{{ k.birim_kurus|tl }}</td>
+          <td class="sag tutar">{{ (k.adet * k.birim_kurus)|tl }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="soluk">Ürün eklenmemiş.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="3" class="sag"><strong>Toplam</strong></td><td class="sag tutar"><strong>{{ t.toplam_kurus|tl }}</strong></td></tr></tfoot>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div class="iki-sutun">
+  {% if t.durum != 'satis' %}
+  <form method="post" action="{{ url_for('talepler.takip', talep_id=t.id) }}" class="kart" id="takip">
+    {{ csrf() }}
+    <h2>Görüşme notu / sonuç</h2>
+    <div class="alan">
+      <label for="n-metin">Ne konuşuldu?</label>
+      <input id="n-metin" name="metin" placeholder="ör. Aradım, hafta sonu karar verecek">
+    </div>
+    <div class="satir-alanlar">
+      <div class="alan">
+        <label for="n-durum">Durum</label>
+        <select id="n-durum" name="durum" data-durum-sec>
+          <option value="fiyat_verildi" {{ 'selected' if t.durum == 'fiyat_verildi' }}>Fiyat verildi</option>
+          <option value="dusunuyor" {{ 'selected' if t.durum == 'dusunuyor' }}>Düşünüyor</option>
+          <option value="olmadi" {{ 'selected' if t.durum == 'olmadi' }}>Olmadı</option>
+        </select>
+      </div>
+      <div class="alan" data-acik-alan>
+        <label for="n-hat">Sonraki hatırlatma</label>
+        <input id="n-hat" type="date" name="hatirlatma" value="{{ t.hatirlatma if t.hatirlatma and t.hatirlatma > bugun else yarin }}">
+      </div>
+      <div class="alan" data-kayip-alan hidden>
+        <label for="n-kayip">Neden olmadı?</label>
+        <select id="n-kayip" name="kayip_sebebi">
+          {% for s in kayip_sebepleri %}<option {{ 'selected' if t.kayip_sebebi == s }}>{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-alt">
+      <button type="submit" class="dugme">Kaydet</button>
+      <a class="dugme dugme-ikincil" href="{{ url_for('satislar.talepten_satis', talep_id=t.id) }}">Aldı → Satışa çevir</a>
+    </div>
+  </form>
+  {% endif %}
+
+  <div class="kart">
+    <h2>Geçmiş</h2>
+    {% if notlar %}
+    <ul class="islem-listesi">
+      {% for n in notlar %}
+      <li><span class="zaman">{{ n.zaman|tarih }}</span><span>{{ n.metin }}</span><span class="kim">{{ n.ad_soyad or '' }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="soluk">Henüz not yok.</p>{% endif %}
+
+    {% if gecmis %}
+    <h3 class="ara-baslik">Bu numaranın önceki talepleri</h3>
+    <ul class="islem-listesi">
+      {% for g_ in gecmis %}
+      <li>
+        <span class="zaman">{{ g_.olusturma|tarih(false) }}</span>
+        <span><a href="{{ url_for('talepler.detay', talep_id=g_.id) }}">{{ ' '.join([g_.marka or '', g_.model or ''])|trim or 'Talep' }}</a> — {{ g_.urunler or '' }} · {{ g_.toplam_kurus|tl }}</span>
+        <span class="kim">{{ durumlar[g_.durum] }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

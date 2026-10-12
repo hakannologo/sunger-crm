@@ -13,9 +13,62 @@ TR_SAAT = timezone(timedelta(hours=3))
 PARCA_TIPLERI = ["Oturak", "Sırt", "Başlık", "Kolçak", "Baldır", "Takım", "Diğer"]
 
 
+KANALLAR = {"telefon": "Telefon", "whatsapp": "WhatsApp", "instagram": "Instagram",
+            "facebook": "Facebook", "diger": "Diğer"}
+TALEP_DURUMLARI = {"fiyat_verildi": "Fiyat verildi", "dusunuyor": "Düşünüyor",
+                   "satis": "Satışa döndü", "olmadi": "Olmadı"}
+KAYIP_SEBEPLERI = ["Pahalı buldu", "Başka yerden aldı", "Cevap vermedi", "Vazgeçti", "Diğer"]
+SATIS_DURUMLARI = {"hazirlaniyor": "Hazırlanıyor", "kargoda": "Kargoda",
+                   "teslim": "Teslim edildi", "iade": "İade"}
+ODEME_SEKILLERI = {"nakit": "Nakit", "kart": "Kredi kartı", "havale": "Havale / EFT",
+                   "kapida": "Kapıda ödeme"}
+ARAS_TAKIP = "https://kargotakip.araskargo.com.tr/mainpage.aspx?code="
+
+
 def simdi():
     """Türkiye saatiyle 'YYYY-AA-GG SS:DD:ss' biçiminde zaman."""
     return datetime.now(TR_SAAT).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def bugun(gun_ekle=0):
+    """Türkiye saatiyle 'YYYY-AA-GG' (isteğe bağlı gün eklenmiş)."""
+    return (datetime.now(TR_SAAT) + timedelta(days=gun_ekle)).strftime("%Y-%m-%d")
+
+
+def tarih_oku(metin):
+    """'YYYY-AA-GG' doğrular; boş/geçersizse None."""
+    metin = (metin or "").strip()
+    try:
+        return datetime.strptime(metin, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def tel_normal(metin):
+    """'0 (532) 123 45 67', '+90532...' -> '5321234567'. Rakam yoksa None."""
+    rakam = re.sub(r"\D", "", metin or "")
+    if rakam.startswith("90") and len(rakam) == 12:
+        rakam = rakam[2:]
+    if rakam.startswith("0") and len(rakam) == 11:
+        rakam = rakam[1:]
+    return rakam or None
+
+
+def tel_yaz(tel):
+    """'5321234567' -> '0532 123 45 67'."""
+    if not tel:
+        return ""
+    if len(tel) == 10:
+        return f"0{tel[:3]} {tel[3:6]} {tel[6:8]} {tel[8:]}"
+    return tel
+
+
+def whatsapp_link(tel, mesaj=None):
+    if not tel:
+        return None
+    hedef = "90" + tel if len(tel) == 10 else tel
+    from urllib.parse import quote
+    return f"https://wa.me/{hedef}" + (f"?text={quote(mesaj)}" if mesaj else "")
 
 
 # --------------------------------------------------------------------------- #
@@ -66,6 +119,11 @@ def tarih_yaz(metin, saat=True):
     """'2026-10-12 14:05:00' -> '12.10.2026 14:05'."""
     if not metin:
         return "—"
+    if len(metin) == 10:
+        try:
+            return datetime.strptime(metin, "%Y-%m-%d").strftime("%d.%m.%Y")
+        except ValueError:
+            return metin
     try:
         d = datetime.strptime(metin[:19], "%Y-%m-%d %H:%M:%S")
     except ValueError:

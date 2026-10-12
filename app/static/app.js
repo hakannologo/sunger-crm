@@ -48,6 +48,7 @@
           hedef.add(new Option(bosEtiket, ""));
           liste.forEach(function (m) { hedef.add(new Option(m.ad, m.id)); });
           hedef.disabled = false;
+          hedef.dispatchEvent(new Event("change", { bubbles: true }));
         })
         .catch(function () {
           hedef.innerHTML = "";
@@ -127,5 +128,170 @@
         }
       });
     }
+  }
+
+  // ---------- Durum seçimi: hatırlatma / olmama sebebi alanları ----------
+  document.querySelectorAll("select[data-durum-sec]").forEach(function (sec) {
+    var kap = sec.closest("form");
+    function guncelle() {
+      var olmadi = sec.value === "olmadi";
+      kap.querySelectorAll("[data-acik-alan]").forEach(function (e) { e.hidden = olmadi; });
+      kap.querySelectorAll("[data-kayip-alan]").forEach(function (e) { e.hidden = !olmadi; });
+    }
+    sec.addEventListener("change", guncelle);
+    guncelle();
+  });
+
+  // ---------- Talep formu ----------
+  var tf = document.getElementById("talep-form");
+  if (tf) {
+    var urunApi = tf.getAttribute("data-urun-api");
+    var kisiApi = tf.getAttribute("data-kisi-api");
+    var talepId = tf.getAttribute("data-talep-id");
+    var govde = document.getElementById("kalemler");
+    var sablon = document.getElementById("kalem-sablon");
+    var oneriler = document.getElementById("urun-oneriler");
+    var araKutu = document.getElementById("urun-ara");
+    var markaSec = document.getElementById("a-marka");
+    var modelSec = document.getElementById("a-model");
+    var fiyatTipi = document.getElementById("a-fiyat_tipi");
+    var sonUrunler = [];
+
+    function yazTL(kurus) {
+      var tam = Math.floor(kurus / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      return tam + "," + String(kurus % 100).padStart(2, "0") + " ₺";
+    }
+    function toplamHesapla() {
+      var toplam = 0;
+      govde.querySelectorAll("tr").forEach(function (tr) {
+        var adet = parseInt(tr.querySelector(".kalem-adet").value, 10) || 0;
+        var f = tlOku(tr.querySelector(".kalem-fiyat").value);
+        var tutar = (f && !Number.isNaN(f)) ? adet * f : 0;
+        toplam += tutar;
+        tr.querySelector(".kalem-tutar").textContent = yazTL(tutar);
+      });
+      document.getElementById("genel-toplam").textContent = yazTL(toplam);
+    }
+    function kalemEkle(urun) {
+      var satir = sablon.content.firstElementChild.cloneNode(true);
+      if (urun) {
+        satir.querySelector("[name=k_urun_id]").value = urun.id;
+        satir.querySelector(".kalem-ad").value = urun.ad;
+        var f = fiyatTipi.value === "toptan" ? urun.toptan : urun.perakende;
+        if (f != null) satir.querySelector(".kalem-fiyat").value = tlYaz(f);
+      }
+      govde.appendChild(satir);
+      toplamHesapla();
+      if (!urun) satir.querySelector(".kalem-ad").focus();
+      else if (!satir.querySelector(".kalem-fiyat").value) satir.querySelector(".kalem-fiyat").focus();
+    }
+    govde.addEventListener("input", toplamHesapla);
+    govde.addEventListener("click", function (e) {
+      if (e.target.matches("[data-kalem-sil]")) { e.target.closest("tr").remove(); toplamHesapla(); }
+    });
+    document.getElementById("elle-ekle").addEventListener("click", function () { kalemEkle(null); });
+    fiyatTipi.addEventListener("change", function () {
+      // Listeden gelen ürünlerin fiyatını yeni tipe göre güncelle
+      govde.querySelectorAll("tr").forEach(function (tr) {
+        var id = tr.querySelector("[name=k_urun_id]").value;
+        var u = sonUrunler.filter(function (x) { return String(x.id) === id; })[0];
+        if (u) {
+          var f = fiyatTipi.value === "toptan" ? u.toptan : u.perakende;
+          if (f != null) tr.querySelector(".kalem-fiyat").value = tlYaz(f);
+        }
+      });
+      toplamHesapla();
+      urunleriGoster(sonUrunler);
+    });
+
+    function urunleriGoster(liste) {
+      oneriler.innerHTML = "";
+      if (!liste.length) {
+        oneriler.innerHTML = '<p class="soluk kucuk">Uygun ürün bulunamadı. Aramayı değiştirin ya da “Listede olmayan ürün ekle”yi kullanın.</p>';
+        return;
+      }
+      liste.forEach(function (u) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "oneri";
+        var f = fiyatTipi.value === "toptan" ? u.toptan : u.perakende;
+        b.innerHTML = '<span class="oneri-tip"></span><span class="oneri-ad"></span><span class="oneri-fiyat"></span>';
+        b.querySelector(".oneri-tip").textContent = u.tip;
+        b.querySelector(".oneri-ad").textContent = u.ad;
+        b.querySelector(".oneri-fiyat").textContent = f != null ? yazTL(f) : "fiyat yok";
+        b.addEventListener("click", function () { kalemEkle(u); b.classList.add("eklendi"); });
+        oneriler.appendChild(b);
+      });
+    }
+    var sayac = 0;
+    function urunleriGetir() {
+      var q = araKutu.value.trim();
+      var marka = markaSec.value, model = modelSec.value;
+      if (!q && !marka) {
+        oneriler.innerHTML = '<p class="soluk kucuk">Araç seçince uyumlu ürünler burada listelenir. Tıklayınca talebe eklenir.</p>';
+        return;
+      }
+      var no = ++sayac;
+      var url = urunApi + "?marka=" + encodeURIComponent(marka) + "&model=" + encodeURIComponent(model) +
+        "&q=" + encodeURIComponent(q);
+      fetch(url, { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (liste) {
+        if (no !== sayac) return;
+        sonUrunler = sonUrunler.concat(liste.filter(function (u) {
+          return !sonUrunler.some(function (x) { return x.id === u.id; });
+        }));
+        urunleriGoster(liste);
+      });
+    }
+    var araZaman;
+    araKutu.addEventListener("input", function () { clearTimeout(araZaman); araZaman = setTimeout(urunleriGetir, 250); });
+    araKutu.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
+    markaSec.addEventListener("change", urunleriGetir);
+    modelSec.addEventListener("change", urunleriGetir);
+    if (markaSec.value) urunleriGetir();
+    toplamHesapla();
+
+    // Telefon yazılınca önceki talepleri göster
+    var telKutu = document.getElementById("a-telefon");
+    var gecmisKutu = document.getElementById("kisi-gecmis");
+    var telZaman;
+    function kisiSorgula() {
+      var rakam = telKutu.value.replace(/\D/g, "");
+      if (rakam.length < 10) { gecmisKutu.hidden = true; return; }
+      fetch(kisiApi + "?tel=" + encodeURIComponent(telKutu.value) + (talepId ? "&haric=" + talepId : ""),
+            { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (v) {
+          if (!v.musteri && !v.talepler.length) { gecmisKutu.hidden = true; return; }
+          gecmisKutu.innerHTML = "";
+          var bas = document.createElement("strong");
+          bas.textContent = v.musteri
+            ? "Kayıtlı müşteri: " + v.musteri.ad + (v.musteri.tip === "toptan" ? " (toptan)" : "")
+            : "Bu numara daha önce sormuş:";
+          gecmisKutu.appendChild(bas);
+          var ul = document.createElement("ul");
+          v.talepler.forEach(function (t) {
+            var li = document.createElement("li");
+            var a = document.createElement("a");
+            a.href = t.url; a.target = "_blank"; a.textContent = t.tarih.split("-").reverse().join(".");
+            li.appendChild(a);
+            li.appendChild(document.createTextNode(" — " + [t.arac, t.urunler].filter(Boolean).join(" · ") +
+              " — " + t.toplam + " (" + t.durum + ")"));
+            ul.appendChild(li);
+          });
+          gecmisKutu.appendChild(ul);
+          gecmisKutu.hidden = false;
+          var adKutu = document.getElementById("a-ad");
+          if (!adKutu.value) {
+            var eskiAd = v.musteri ? v.musteri.ad : (v.talepler.filter(function (t) { return t.ad; })[0] || {}).ad;
+            if (eskiAd) adKutu.value = eskiAd;
+          }
+          if (v.musteri && v.musteri.tip === "toptan" && fiyatTipi.value !== "toptan") {
+            fiyatTipi.value = "toptan";
+            fiyatTipi.dispatchEvent(new Event("change"));
+          }
+        });
+    }
+    telKutu.addEventListener("input", function () { clearTimeout(telZaman); telZaman = setTimeout(kisiSorgula, 400); });
+    if (telKutu.value) kisiSorgula();
   }
 })();

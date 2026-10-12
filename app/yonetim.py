@@ -5,7 +5,8 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from .auth import EN_AZ_SIFRE, KULLANICI_ADI_KALIBI, sifre_hashle
 from .db import baglanti, sorgu, tr_kucuk
-from .yardimci import Sayfa, admin_gerekli, islem_kaydet, sayfa_no, simdi
+from .yardimci import (KANALLAR, Sayfa, admin_gerekli, bugun, islem_kaydet, sayfa_no, simdi,
+                       tarih_oku)
 
 bp = Blueprint("yonetim", __name__, url_prefix="/yonetim")
 
@@ -300,3 +301,41 @@ def islem_kaydi():
         "yonetim/islem_kaydi.html", kayitlar=kayitlar, sayfa=sayfa, f=request.args,
         kullanicilar=sorgu("SELECT id, ad_soyad FROM kullanicilar ORDER BY ad_soyad"),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Talep / satış raporu
+# --------------------------------------------------------------------------- #
+
+@bp.route("/rapor")
+@admin_gerekli
+def rapor():
+    bas = tarih_oku(request.args.get("bas")) or bugun()[:8] + "01"
+    bit = tarih_oku(request.args.get("bit")) or bugun()
+    aralik = (bas, bit + " 23:59:59")
+    kanal = sorgu(
+        """SELECT kanal, COUNT(*) AS talep,
+                  SUM(durum = 'satis') AS satis, SUM(durum = 'olmadi') AS olmadi,
+                  SUM(durum IN ('fiyat_verildi', 'dusunuyor')) AS acik,
+                  COALESCE(SUM(CASE WHEN durum = 'satis' THEN toplam_kurus END), 0) AS ciro
+           FROM talepler WHERE olusturma BETWEEN ? AND ? GROUP BY kanal ORDER BY talep DESC""",
+        aralik,
+    )
+    kisi = sorgu(
+        """SELECT k.ad_soyad, COUNT(t.id) AS talep,
+                  SUM(t.durum = 'satis') AS satis, SUM(t.durum = 'olmadi') AS olmadi,
+                  SUM(t.durum IN ('fiyat_verildi', 'dusunuyor')) AS acik,
+                  COALESCE(SUM(CASE WHEN t.durum = 'satis' THEN t.toplam_kurus END), 0) AS ciro
+           FROM talepler t JOIN kullanicilar k ON k.id = t.kullanici_id
+           WHERE t.olusturma BETWEEN ? AND ? GROUP BY k.id ORDER BY talep DESC""",
+        aralik,
+    )
+    sebep = sorgu(
+        """SELECT COALESCE(kayip_sebebi, 'Belirtilmedi') AS sebep, COUNT(*) AS n FROM talepler
+           WHERE durum = 'olmadi' AND olusturma BETWEEN ? AND ? GROUP BY sebep ORDER BY n DESC""",
+        aralik,
+    )
+    toplam = {"talep": sum(r["talep"] for r in kanal), "satis": sum(r["satis"] or 0 for r in kanal),
+              "ciro": sum(r["ciro"] for r in kanal)}
+    return render_template("yonetim/rapor.html", kanal=kanal, kisi=kisi, sebep=sebep, toplam=toplam,
+                           bas=bas, bit=bit, kanallar=KANALLAR)

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}Satış #{{ s.id }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('satislar.satis_liste') }}">‹ Satışlar</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>Satış #{{ s.id }} — {{ s.musteri }}</h1>
+    <p class="soluk"><span class="rozet satis-{{ s.durum }}">{{ durumlar[s.durum] }}</span> {{ s.olusturma|tarih }} · {{ s.kullanici }}
+      {% if s.talep_id %} · <a href="{{ url_for('talepler.detay', talep_id=s.talep_id) }}">Talep #{{ s.talep_id }}</a>{% endif %}</p>
+  </div>
+  <div class="baslik-dugmeler">
+    {% if wa %}<a class="dugme dugme-ikincil" href="{{ wa }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}
+    <a class="dugme dugme-ikincil" href="{{ url_for('satislar.musteri_detay', musteri_id=s.musteri_id) }}">Müşteri kartı</a>
+  </div>
+</div>
+
+<div class="iki-sutun">
+  <div class="kart tablo-kart">
+    <div class="kart-ic"><h2>Sipariş</h2></div>
+    <div class="tablo-sarmal">
+    <table class="tablo">
+      <thead><tr><th>Ürün</th><th class="sag">Adet</th><th class="sag">Birim</th><th class="sag">Tutar</th></tr></thead>
+      <tbody>
+        {% for k in kalemler %}
+        <tr><td>{{ k.urun_adi }}{% if k.kod %}<div class="alt-bilgi kod">{{ k.kod }}</div>{% endif %}</td>
+          <td class="sag">{{ k.adet }}</td><td class="sag tutar">{{ k.birim_kurus|tl }}</td>
+          <td class="sag tutar">{{ (k.adet * k.birim_kurus)|tl }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="3" class="sag"><strong>Toplam</strong></td><td class="sag tutar"><strong>{{ s.toplam_kurus|tl }}</strong></td></tr></tfoot>
+    </table>
+    </div>
+    <div class="kart-ic">
+      <dl class="bilgi-listesi">
+        <dt>Telefon</dt><dd>{{ s.telefon|tel }}</dd>
+        <dt>Adres</dt><dd>{{ s.adres }}{% if s.sehir %}<br><span class="soluk">{{ s.sehir }}</span>{% endif %}</dd>
+        <dt>Kargo</dt><dd>{{ s.kargo_firma }} (karşı ödemeli)</dd>
+        {% if s.takip_no %}<dt>Takip no</dt><dd><a href="{{ aras }}{{ s.takip_no }}" target="_blank" rel="noopener">{{ s.takip_no }} — Aras'ta aç ↗</a></dd>{% endif %}
+      </dl>
+      {% if wa_kargo %}<a class="dugme dugme-ikincil dugme-kucuk" href="{{ wa_kargo }}" target="_blank" rel="noopener">Takip numarasını WhatsApp'tan gönder</a>{% endif %}
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('satislar.satis_guncelle', satis_id=s.id) }}" class="kart">
+    {{ csrf() }}
+    <h2>Durum ve kargo</h2>
+    <div class="secenek-grubu">
+      {% for k, ad in durumlar.items() %}
+      <label class="secenek"><input type="radio" name="durum" value="{{ k }}" {{ 'checked' if s.durum == k }}><span>{{ ad }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="alan">
+      <label for="a-takip">Aras takip numarası</label>
+      <input id="a-takip" name="takip_no" value="{{ s.takip_no or '' }}" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="alan">
+      <label for="a-odeme">Ödeme şekli</label>
+      <select id="a-odeme" name="odeme">
+        {% for k, ad in odemeler.items() %}<option value="{{ k }}" {{ 'selected' if s.odeme == k }}>{{ ad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan">
+      <label for="a-not">Not</label>
+      <input id="a-not" name="notlar" value="{{ s.notlar or '' }}">
+    </div>
+    <div class="form-alt"><button type="submit" class="dugme">Kaydet</button></div>
+    <p class="soluk kucuk">Tahsilat takibi (kapıda ödeme parası geldi mi, havale yattı mı) bir sonraki aşamada eklenecek.</p>
+  </form>
+</div>
+{% endblock %}
