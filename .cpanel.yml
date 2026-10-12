@@ -1,0 +1,8 @@
+# cPanel "Git Version Control" → "Deploy HEAD Commit" ile çalışır.
+# Uygulama doğrudan depo klasöründen çalıştığı için dosya kopyalamaya gerek yok;
+# sadece Passenger'a uygulamayı yeniden başlatmasını söylüyoruz.
+---
+deployment:
+  tasks:
+    - /bin/mkdir -p tmp
+    - /bin/touch tmp/restart.txt

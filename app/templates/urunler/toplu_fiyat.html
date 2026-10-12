@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}Toplu fiyat girişi{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Toplu fiyat girişi</h1>
+    <p class="soluk">Fiyatları tabloya yazıp en alttaki “Kaydet” ile hepsini birden kaydedin. Tutarları 1250 veya 1.250,50 gibi yazabilirsiniz.</p>
+  </div>
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan">
+      <label for="t-kategori">Kategori</label>
+      <select id="t-kategori" name="kategori">
+        <option value="">Tümü</option>
+        {% for k in kategoriler %}<option {{ 'selected' if f.get('kategori') == k }}>{{ k }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan">
+      <label for="t-tip">Parça</label>
+      <select id="t-tip" name="tip">
+        <option value="">Tümü</option>
+        {% for t in tipler %}<option {{ 'selected' if f.get('tip') == t }}>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan alan-dugme">
+      <label class="onay"><input type="checkbox" name="fiyat" value="eksik" {{ 'checked' if f.get('fiyat') == 'eksik' }}> Sadece fiyatı eksikler</label>
+    </div>
+    <div class="alan alan-dugme"><button type="submit" class="dugme dugme-ikincil">Listele</button></div>
+  </div>
+</form>
+
+{% if urunler %}
+<div class="kart yardimci-kart" data-toplu-yardimci>
+  <h2>Hızlı doldur</h2>
+  <p class="soluk kucuk">Aşağıdaki listede aynı fiyattaki ürünleri tek tek yazmamak için. Bu kutu sadece tabloyu doldurur; kaydetmek için yine en alttaki “Kaydet”e basın.</p>
+  <div class="satir-alanlar">
+    <div class="alan">
+      <label for="h-tip">Hangi ürünlere</label>
+      <select id="h-tip">
+        <option value="">Listedeki tüm ürünler</option>
+        {% for t in tipler %}<option>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan"><label for="h-p">Perakende</label><input id="h-p" inputmode="decimal" placeholder="boş = dokunma"></div>
+    <div class="alan"><label for="h-t">Toptan</label><input id="h-t" inputmode="decimal" placeholder="boş = dokunma"></div>
+    <div class="alan"><label for="h-yuzde">veya toptan = perakende − %</label><input id="h-yuzde" inputmode="decimal" placeholder="ör. 20"></div>
+    <div class="alan alan-dugme"><label class="onay"><input type="checkbox" id="h-bos" checked> Sadece boş alanlara</label></div>
+    <div class="alan alan-dugme"><button type="button" class="dugme dugme-ikincil" data-doldur>Tabloya uygula</button></div>
+  </div>
+  <p class="doldur-sonuc" data-doldur-sonuc role="status"></p>
+</div>
+
+<form method="post" class="kart tablo-kart" data-degisiklik-uyarisi>
+  {{ csrf() }}
+  <div class="tablo-sarmal">
+  <table class="tablo fiyat-tablosu">
+    <thead>
+      <tr><th>Kod</th><th>Ürün</th><th class="sag">Perakende (₺)</th><th class="sag">Toptan (₺)</th></tr>
+    </thead>
+    <tbody>
+      {% for u in urunler %}
+      {% set p, t = girilen.get(u.id, (u.perakende_kurus|tl_girdi, u.toptan_kurus|tl_girdi)) %}
+      <tr data-tip="{{ u.parca_tipi }}">
+        <td class="kod">{{ u.kod }}<input type="hidden" name="id" value="{{ u.id }}"></td>
+        <td>{{ u.ad }}<div class="alt-bilgi">{{ u.kategori }} · {{ u.parca_tipi }}</div></td>
+        <td class="sag"><input class="tutar-girdi{{ ' hatali-girdi' if hatalar.get((u.id, 'p')) }}" name="p_{{ u.id }}" value="{{ p }}" inputmode="decimal" aria-label="{{ u.kod }} perakende" data-perakende></td>
+        <td class="sag"><input class="tutar-girdi{{ ' hatali-girdi' if hatalar.get((u.id, 't')) }}" name="t_{{ u.id }}" value="{{ t }}" inputmode="decimal" aria-label="{{ u.kod }} toptan" data-toptan></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="yapiskan-alt">
+    <span class="soluk">{{ urunler|length }} ürün listeleniyor</span>
+    <button type="submit" class="dugme">Kaydet</button>
+  </div>
+</form>
+{% else %}
+<div class="kart bos-durum">
+  <p><strong>Bu filtrelere uyan ürün yok.</strong></p>
+  {% if f.get('fiyat') == 'eksik' %}<p class="soluk">Seçili ürünlerin hepsinin fiyatı girilmiş.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

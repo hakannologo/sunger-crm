@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}{{ u.kod }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('urunler.liste') }}">‹ Ürünler</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>{{ u.ad }}</h1>
+    <p class="soluk"><span class="kod">{{ u.kod }}</span> · {{ u.kategori }} · {{ u.parca_tipi }}
+      {% if not u.aktif %}<span class="rozet rozet-gri">Pasif</span>{% endif %}</p>
+  </div>
+  {% if kullanici.rol == 'admin' %}
+  <div class="baslik-dugmeler">
+    <a class="dugme dugme-ikincil" href="{{ url_for('urunler.duzenle', urun_id=u.id) }}">Düzenle</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="iki-sutun">
+  <div class="kart">
+    <h2>Fiyat</h2>
+    <dl class="bilgi-listesi">
+      <dt>Perakende</dt><dd class="buyuk-tutar {{ 'eksik' if u.perakende_kurus is none }}">{{ u.perakende_kurus|tl }}</dd>
+      <dt>Toptan</dt><dd class="buyuk-tutar {{ 'eksik' if u.toptan_kurus is none }}">{{ u.toptan_kurus|tl }}</dd>
+    </dl>
+    {% if u.orijinal_kod and u.orijinal_kod != u.kod %}
+    <p class="soluk kucuk">Web sitesindeki kod: {{ u.orijinal_kod }}</p>
+    {% endif %}
+    <p class="soluk kucuk">Son güncelleme: {{ u.guncelleme|tarih }}</p>
+  </div>
+
+  <div class="kart">
+    <h2>Uyumlu araçlar</h2>
+    {% if uyum %}
+    <ul class="uyum-listesi">
+      {% for s in uyum %}
+      <li>
+        <a href="{{ url_for('urunler.liste', marka=s.marka_id, model=s.model_id or '') }}">
+          {{ s.marka }} {% if s.model %}{{ s.model }}{% else %}<em>(tüm modeller)</em>{% endif %}
+        </a>
+        {% if kullanici.rol == 'admin' %}
+        <form method="post" action="{{ url_for('urunler.uyumluluk_sil', urun_id=u.id, uyum_id=s.id) }}" data-onay="{{ s.marka }} {{ s.model or '' }} bu üründen çıkarılsın mı?">
+          {{ csrf() }}
+          <button type="submit" class="baglanti-dugme tehlike">Çıkar</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="soluk">Genel ürün — belirli bir araca bağlı değil.</p>
+    {% endif %}
+
+    {% if kullanici.rol == 'admin' %}
+    <form method="post" action="{{ url_for('urunler.uyumluluk_ekle', urun_id=u.id) }}" class="uyum-ekle">
+      {{ csrf() }}
+      <h3>Araç ekle</h3>
+      <div class="satir-alanlar">
+        <div class="alan">
+          <label for="u-marka">Marka</label>
+          <select id="u-marka" name="marka_id" data-model-hedef="u-model" required>
+            <option value="">Seçin</option>
+            {% for m in markalar %}<option value="{{ m.id }}">{{ m.ad }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="alan">
+          <label for="u-model">Model</label>
+          <select id="u-model" name="model_id" disabled data-bos-etiket="Tüm modeller">
+            <option value="">Önce marka seçin</option>
+          </select>
+        </div>
+        <div class="alan alan-dugme">
+          <button type="submit" class="dugme">Ekle</button>
+        </div>
+      </div>
+      <p class="soluk kucuk">Listede olmayan marka veya model için önce <a href="{{ url_for('yonetim.markalar') }}">Marka / model</a> sayfasından ekleyin.</p>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

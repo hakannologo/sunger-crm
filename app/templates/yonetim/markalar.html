@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}Marka / model{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Marka / model</h1>
+    <p class="soluk">Müşteri aracı ve ürün uyumluluğu bu listeden seçilir. Yazım birliği için yeni marka/modeli buradan ekleyin.</p>
+  </div>
+</div>
+
+<form method="post" class="kart satir-form">
+  {{ csrf() }}
+  <div class="alan alan-genis">
+    <label for="m-ad">Yeni marka</label>
+    <input id="m-ad" name="ad" placeholder="ör. Suzuki" required>
+  </div>
+  <div class="alan alan-dugme"><button type="submit" class="dugme">Ekle</button></div>
+</form>
+
+<div class="kart tablo-kart">
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead><tr><th>Marka</th><th class="sag">Model</th><th class="sag">Ürün</th><th></th></tr></thead>
+    <tbody>
+      {% for m in liste %}
+      <tr data-href="{{ url_for('yonetim.marka', marka_id=m.id) }}">
+        <td><a href="{{ url_for('yonetim.marka', marka_id=m.id) }}"><strong>{{ m.ad }}</strong></a></td>
+        <td class="sag">{{ m.model_sayisi }}</td>
+        <td class="sag">{{ m.urun_sayisi }}</td>
+        <td class="sag"><a href="{{ url_for('yonetim.marka', marka_id=m.id) }}">Modeller →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

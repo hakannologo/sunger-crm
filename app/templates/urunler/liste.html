@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import sayfalama, arac_etiketleri %}
+{% block baslik %}Ürünler{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Ürünler</h1>
+    <p class="soluk">{{ sayfa.toplam }} ürün bulundu</p>
+  </div>
+  {% if kullanici.rol == 'admin' %}
+  <div class="baslik-dugmeler">
+    <a class="dugme dugme-ikincil" href="{{ url_for('urunler.toplu_fiyat', kategori=f.get('kategori', '')) }}">Toplu fiyat</a>
+    <a class="dugme" href="{{ url_for('urunler.yeni', kategori=f.get('kategori', '')) }}">+ Yeni ürün</a>
+  </div>
+  {% endif %}
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan alan-genis">
+      <label for="f-q">Ara</label>
+      <input id="f-q" name="q" type="search" value="{{ f.get('q', '') }}" placeholder="Ad, kod, marka veya model">
+    </div>
+    <div class="alan">
+      <label for="f-marka">Marka</label>
+      <select id="f-marka" name="marka" data-model-hedef="f-model">
+        <option value="">Tümü</option>
+        {% for m in markalar %}<option value="{{ m.id }}" {{ 'selected' if f.get('marka') == m.id|string }}>{{ m.ad }}</option>{% endfor %}
+        <option value="genel" {{ 'selected' if f.get('marka') == 'genel' }}>Genel (araç bağımsız)</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-model">Model</label>
+      <select id="f-model" name="model" {{ 'disabled' if not modeller }}>
+        <option value="">{{ 'Tüm modeller' if modeller else 'Önce marka seçin' }}</option>
+        {% for mo in modeller %}<option value="{{ mo.id }}" {{ 'selected' if f.get('model') == mo.id|string }}>{{ mo.ad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-kategori">Kategori</label>
+      <select id="f-kategori" name="kategori">
+        <option value="">Tümü</option>
+        {% for k in kategoriler %}<option {{ 'selected' if f.get('kategori') == k }}>{{ k }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-tip">Parça</label>
+      <select id="f-tip" name="tip">
+        <option value="">Tümü</option>
+        {% for t in tipler %}<option {{ 'selected' if f.get('tip') == t }}>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if kullanici.rol == 'admin' %}
+    <div class="alan">
+      <label for="f-durum">Durum</label>
+      <select id="f-durum" name="durum">
+        <option value="aktif" {{ 'selected' if f.get('durum', 'aktif') == 'aktif' }}>Aktif</option>
+        <option value="pasif" {{ 'selected' if f.get('durum') == 'pasif' }}>Pasif</option>
+        <option value="tumu" {{ 'selected' if f.get('durum') == 'tumu' }}>Tümü</option>
+      </select>
+    </div>
+    {% endif %}
+  </div>
+  <div class="filtre-alt">
+    <label class="onay"><input type="checkbox" name="fiyat" value="eksik" {{ 'checked' if f.get('fiyat') == 'eksik' }}> Sadece fiyatı eksik olanlar</label>
+    <div>
+      <a href="{{ url_for('urunler.liste') }}" class="dugme dugme-ikincil">Temizle</a>
+      <button type="submit" class="dugme">Filtrele</button>
+    </div>
+  </div>
+</form>
+
+{% if f.get('model') %}
+<p class="soluk kucuk">Seçilen modele özel ürünlerin yanında, markanın tüm modellerine uyan ürünler de listelenir. Kolçak, VIP takım gibi araç bağımsız ürünler için Marka → “Genel” seçin.</p>
+{% endif %}
+
+<div class="kart tablo-kart">
+  {% if urunler %}
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead>
+      <tr>
+        <th class="gizle-mobil">Kod</th>
+        <th>Ürün</th>
+        <th class="gizle-mobil">Uyumlu araçlar</th>
+        <th class="sag">Perakende</th>
+        <th class="sag">Toptan</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in urunler %}
+      <tr class="{{ 'pasif-satir' if not u.aktif }}" data-href="{{ url_for('urunler.detay', urun_id=u.id) }}">
+        <td class="kod gizle-mobil"><a href="{{ url_for('urunler.detay', urun_id=u.id) }}">{{ u.kod }}</a></td>
+        <td>
+          <a href="{{ url_for('urunler.detay', urun_id=u.id) }}" class="urun-adi">{{ u.ad }}</a>
+          <div class="alt-bilgi"><span class="sadece-mobil kod">{{ u.kod }} · </span>{{ u.kategori }} · {{ u.parca_tipi }}{% if not u.aktif %} · <strong>Pasif</strong>{% endif %}</div>
+        </td>
+        <td class="gizle-mobil etiketler">{{ arac_etiketleri(uyum.get(u.id, [])) }}</td>
+        <td class="sag tutar {{ 'eksik' if u.perakende_kurus is none }}">{{ u.perakende_kurus|tl }}</td>
+        <td class="sag tutar {{ 'eksik' if u.toptan_kurus is none }}">{{ u.toptan_kurus|tl }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ sayfalama(sayfa) }}
+  {% else %}
+  <div class="bos-durum">
+    <p><strong>Bu filtrelere uyan ürün yok.</strong></p>
+    <p class="soluk">Aramayı kısaltmayı ya da filtreleri temizlemeyi deneyin.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,1 +1,70 @@
-# sunger-crm
+# Sünger Merkezi — Müşteri Takip Programı
+
+Flask + SQLite ile yazılmış, cPanel'de "Setup Python App" ile çalışan müşteri takip programı.
+Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez.
+
+## Şu an neler var (1. aşama)
+
+- İlk açılışta yönetici hesabı oluşturma ekranı
+- Giriş / çıkış, şifre değiştirme, 5 hatalı denemede 10 dakika kilit
+- **Kullanıcılar** (yönetici): ekleme, düzenleme, pasife alma, şifre sıfırlama
+- **Ürünler**: 356 ürün hazır yüklü; marka → model seçerek veya arayarak ürün bulma
+- **Ürün kartı**: perakende/toptan fiyat, uyumlu araçlar (yönetici araç ekleyip çıkarabilir)
+- **Toplu fiyat girişi** (yönetici): kategori/parça tipine göre listeleyip tabloya fiyat yazma,
+  "Hızlı doldur" ile aynı fiyatı birçok ürüne verme, toptanı perakendeden yüzde ile hesaplama
+- **Marka / model** (yönetici): 30 marka, 108 model hazır; ekleme, yeniden adlandırma, silme
+- **İşlem kaydı** (yönetici): kim, ne zaman, neyi değiştirdi
+
+Sıradaki aşamalar: müşteri ve araç kayıtları, satış/sipariş ve kargo, ödeme, kapıda ödeme takibi,
+cari hesap, alacak takvimi, raporlar ve Excel'e aktarma.
+
+## cPanel'e kurulum (ilk sefer)
+
+1. **Alt alan adı:** cPanel → *Domains* → yeni alt alan adı (ör. `crm.sungermerkezi.com`).
+   SSL'in açık olduğundan emin olun (*SSL/TLS Status* → AutoSSL).
+2. **Depoyu sunucuya çekin:** cPanel → *Git™ Version Control* → *Create*
+   - *Clone a Repository*: açık
+   - *Clone URL*: `https://github.com/hakannologo/sunger-crm.git`
+     (depo gizli olduğu için GitHub kullanıcı adı ve bir erişim anahtarı istenebilir; adım adım birlikte yaparız)
+   - *Repository Path*: ör. `sunger-crm`
+3. **Python uygulaması:** cPanel → *Setup Python App* → *Create Application*
+   - *Python version*: 3.9 veya üstü
+   - *Application root*: 2. adımdaki klasör (ör. `sunger-crm`)
+   - *Application URL*: 1. adımdaki alt alan adı
+   - *Application startup file*: `passenger_wsgi.py`
+   - *Application Entry point*: `application`
+   - Kaydettikten sonra aynı sayfada *Configuration files* kısmına `requirements.txt` yazıp
+     *Run Pip Install* deyin.
+   - İsteğe bağlı *Environment variables*: `FIRMA_ADI` (ekranda görünen ad, varsayılan "Sünger Merkezi")
+4. **Restart** deyin, alt alan adını tarayıcıda açın. İlk ekran yönetici hesabını oluşturmanızı ister.
+
+## Güncelleme (her yeni sürümde)
+
+cPanel → *Git™ Version Control* → depo → *Manage* → *Pull or Deploy* sekmesi:
+
+1. **Update from Remote** — GitHub'daki son kodu sunucuya çeker.
+2. **Deploy HEAD Commit** — uygulamayı yeniden başlatır (`.cpanel.yml`).
+
+Veritabanı tablo değişiklikleri uygulama açılırken otomatik uygulanır; mevcut veriler korunur.
+
+## Veriler nerede?
+
+- Veritabanı: `veri/crm.sqlite3` (proje klasöründe; GitHub'a **gönderilmez**)
+- Oturum anahtarı: `veri/gizli_anahtar` (ilk açılışta kendiliğinden oluşur)
+- Farklı bir klasör kullanmak için `VERI_KLASORU` ortam değişkenini verin.
+
+**Yedek:** `veri/crm.sqlite3` dosyasını düzenli olarak indirin (cPanel *File Manager* veya
+*Backup*). Tüm müşteri ve satış verileri bu tek dosyadadır.
+
+## Geliştirme
+
+```bash
+pip install -r requirements.txt
+VERI_KLASORU=./veri HTTPS_KAPALI=1 flask --app "app:create_app()" run --debug
+python3 -m unittest discover tests
+```
+
+`HTTPS_KAPALI=1` sadece kendi bilgisayarınızda (http üzerinden) denemek içindir; sunucuda kullanmayın.
+
+`araclar/pdf_urun_listesi.py`, web sitesinden alınan ürün listesi PDF'ini temizleyip
+`app/data/urunler.csv` dosyasına çeviren betiktir. Bu CSV yalnızca ilk kurulumda yüklenir.

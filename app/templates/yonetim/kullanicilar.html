@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block baslik %}Kullanıcılar{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Kullanıcılar</h1>
+    <p class="soluk">Kullanıcılar ürünlere bakar, müşteri ve satış girer. Yöneticiler ayrıca fiyatları, kullanıcıları ve raporları yönetir.</p>
+  </div>
+  <div class="baslik-dugmeler"><a class="dugme" href="{{ url_for('yonetim.kullanici_yeni') }}">+ Yeni kullanıcı</a></div>
+</div>
+
+<div class="kart tablo-kart">
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead><tr><th>Ad soyad</th><th>Kullanıcı adı</th><th>Rol</th><th class="gizle-mobil">Son giriş</th><th>Durum</th><th></th></tr></thead>
+    <tbody>
+      {% for k in liste %}
+      <tr class="{{ 'pasif-satir' if not k.aktif }}">
+        <td><strong>{{ k.ad_soyad }}</strong>{% if k.id == kullanici.id %} <span class="soluk">(siz)</span>{% endif %}</td>
+        <td class="kod">{{ k.kullanici_adi }}</td>
+        <td>{{ roller[k.rol] }}</td>
+        <td class="gizle-mobil">{{ k.son_giris|tarih }}</td>
+        <td>{% if k.aktif %}<span class="rozet rozet-yesil">Aktif</span>{% else %}<span class="rozet rozet-gri">Pasif</span>{% endif %}</td>
+        <td class="sag"><a href="{{ url_for('yonetim.kullanici_duzenle', kid=k.id) }}">Düzenle</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block baslik %}Giriş{% endblock %}
+{% block govde_sinifi %}giris-sayfasi{% endblock %}
+{% block icerik %}
+<div class="giris-kutu">
+  <div class="giris-baslik">
+    <div class="logo-isaret" aria-hidden="true"></div>
+    <h1>{{ firma_adi }}</h1>
+    <p>Müşteri Takip Programı</p>
+  </div>
+  <form method="post" class="kart">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="alan">
+      <label for="kadi">Kullanıcı adı</label>
+      <input id="kadi" name="kullanici_adi" value="{{ kullanici_adi }}" autocomplete="username" autocapitalize="none" required autofocus>
+    </div>
+    <div class="alan">
+      <label for="sifre">Şifre</label>
+      <input id="sifre" name="sifre" type="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="dugme dugme-genis">Giriş yap</button>
+  </form>
+</div>
+{% endblock %}

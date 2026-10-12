@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import csrf %}
+{% block baslik %}{{ m.ad }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('yonetim.markalar') }}">‹ Marka / model</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>{{ m.ad }}</h1>
+    <p class="soluk">{{ modeller|length }} model{% if genel %} · {{ genel }} ürün markanın tüm modellerine uyumlu{% endif %}</p>
+  </div>
+  <div class="baslik-dugmeler">
+    <a class="dugme dugme-ikincil" href="{{ url_for('urunler.liste', marka=m.id) }}">Ürünlerini göster</a>
+  </div>
+</div>
+
+<div class="iki-sutun">
+  <div class="kart">
+    <h2>Modeller</h2>
+    <form method="post" action="{{ url_for('yonetim.model_ekle', marka_id=m.id) }}" class="satir-form">
+      {{ csrf() }}
+      <div class="alan alan-genis"><label for="mo-ad">Yeni model</label><input id="mo-ad" name="ad" required placeholder="ör. Corolla"></div>
+      <div class="alan alan-dugme"><button type="submit" class="dugme">Ekle</button></div>
+    </form>
+    {% if modeller %}
+    <ul class="duzenlenebilir-liste">
+      {% for mo in modeller %}
+      <li>
+        <form method="post" action="{{ url_for('yonetim.model_ad', model_id=mo.id) }}" class="satir-ici">
+          {{ csrf() }}
+          <input name="ad" value="{{ mo.ad }}" aria-label="Model adı" required>
+          <button type="submit" class="baglanti-dugme">Kaydet</button>
+        </form>
+        <a class="soluk kucuk" href="{{ url_for('urunler.liste', marka=m.id, model=mo.id) }}">{{ mo.urun_sayisi }} ürün</a>
+        {% if not mo.urun_sayisi %}
+        <form method="post" action="{{ url_for('yonetim.model_sil', model_id=mo.id) }}" data-onay="{{ m.ad }} {{ mo.ad }} silinsin mi?">
+          {{ csrf() }}<button type="submit" class="baglanti-dugme tehlike">Sil</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="soluk">Henüz model yok.</p>
+    {% endif %}
+  </div>
+
+  <div class="kart">
+    <h2>Marka adı</h2>
+    <form method="post" action="{{ url_for('yonetim.marka_ad', marka_id=m.id) }}" class="satir-form">
+      {{ csrf() }}
+      <div class="alan alan-genis"><label for="ma-ad">Ad</label><input id="ma-ad" name="ad" value="{{ m.ad }}" required></div>
+      <div class="alan alan-dugme"><button type="submit" class="dugme dugme-ikincil">Kaydet</button></div>
+    </form>
+    <form method="post" action="{{ url_for('yonetim.marka_sil', marka_id=m.id) }}" data-onay="{{ m.ad }} ve tüm modelleri silinsin mi?" class="tehlikeli-bolge">
+      {{ csrf() }}
+      <p class="soluk kucuk">Markayı silmek için önce bağlı ürünlerden çıkarılmış olması gerekir.</p>
+      <button type="submit" class="dugme dugme-tehlike">Markayı sil</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

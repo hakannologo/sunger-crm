@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import sayfalama %}
+{% block baslik %}İşlem kaydı{% endblock %}
+{% block icerik %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>İşlem kaydı</h1>
+    <p class="soluk">Kim, ne zaman, neyi değiştirdi.</p>
+  </div>
+</div>
+
+<form class="kart filtre" method="get">
+  <div class="satir-alanlar">
+    <div class="alan alan-genis"><label for="i-q">Ara</label><input id="i-q" type="search" name="q" value="{{ f.get('q', '') }}" placeholder="ör. fiyat, SM-FIAT-021, şifre"></div>
+    <div class="alan">
+      <label for="i-k">Kullanıcı</label>
+      <select id="i-k" name="kullanici">
+        <option value="">Tümü</option>
+        {% for k in kullanicilar %}<option value="{{ k.id }}" {{ 'selected' if f.get('kullanici') == k.id|string }}>{{ k.ad_soyad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan alan-dugme"><button type="submit" class="dugme">Filtrele</button></div>
+  </div>
+</form>
+
+<div class="kart tablo-kart">
+  {% if kayitlar %}
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead><tr><th>Zaman</th><th>Kullanıcı</th><th>İşlem</th><th>Ayrıntı</th></tr></thead>
+    <tbody>
+      {% for i in kayitlar %}
+      <tr>
+        <td class="nowrap">{{ i.zaman|tarih }}</td>
+        <td class="nowrap">{{ i.ad_soyad or 'Sistem' }}</td>
+        <td class="nowrap"><strong>{{ i.islem }}</strong></td>
+        <td class="ayrinti">{{ i.detay or '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ sayfalama(sayfa) }}
+  {% else %}
+  <div class="bos-durum"><p class="soluk">Kayıt bulunamadı.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

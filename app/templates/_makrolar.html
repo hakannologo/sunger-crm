@@ -1,0 +1,30 @@
+{% macro alan(ad, etiket, deger='', tur='text', hatalar={}, ipucu=None, zorunlu=false, ozellikler='') -%}
+<div class="alan{{ ' hatali' if hatalar.get(ad) }}">
+  <label for="a-{{ ad }}">{{ etiket }}{% if zorunlu %} <span class="zorunlu">*</span>{% endif %}</label>
+  <input id="a-{{ ad }}" name="{{ ad }}" type="{{ tur }}" value="{{ deger }}" {{ 'required' if zorunlu }} {{ ozellikler|safe }}>
+  {% if hatalar.get(ad) %}<div class="alan-hata">{{ hatalar[ad] }}</div>
+  {% elif ipucu %}<div class="alan-ipucu">{{ ipucu }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro sayfalama(sayfa) -%}
+{% if sayfa.sayfa_sayisi > 1 %}
+<nav class="sayfalama" aria-label="Sayfalar">
+  {% if sayfa.sayfa > 1 %}<a href="{{ sayfa.url(sayfa.sayfa - 1) }}">‹ Önceki</a>{% else %}<span class="pasif">‹ Önceki</span>{% endif %}
+  <span>Sayfa {{ sayfa.sayfa }} / {{ sayfa.sayfa_sayisi }}</span>
+  {% if sayfa.sayfa < sayfa.sayfa_sayisi %}<a href="{{ sayfa.url(sayfa.sayfa + 1) }}">Sonraki ›</a>{% else %}<span class="pasif">Sonraki ›</span>{% endif %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro arac_etiketleri(satirlar) -%}
+{% if satirlar %}
+  {% for s in satirlar %}<span class="etiket">{{ s.marka }}{% if s.model %} {{ s.model }}{% else %} <em>(tümü)</em>{% endif %}</span>{% endfor %}
+{% else %}
+  <span class="etiket etiket-genel">Genel</span>
+{% endif %}
+{%- endmacro %}

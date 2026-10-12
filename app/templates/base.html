@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block baslik %}{% endblock %} · {{ firma_adi }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {% if kullanici %}<meta name="model-api" content="{{ url_for('urunler.api_modeller') }}">{% endif %}
+</head>
+<body class="{% block govde_sinifi %}{% endblock %}">
+{% if kullanici %}
+  {% set ep = request.endpoint or '' %}
+  <header class="ust-cubuk">
+    <button class="menu-dugme" type="button" data-menu-ac aria-label="Menüyü aç">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="marka-adi" href="{{ url_for('ana.panel') }}">{{ firma_adi }}</a>
+  </header>
+  <aside class="yan-menu" id="yan-menu">
+    <div class="yan-ust">
+      <a class="marka-adi" href="{{ url_for('ana.panel') }}">{{ firma_adi }}</a>
+      <span class="alt-baslik">Müşteri Takip</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('ana.panel') }}" class="{{ 'aktif' if ep == 'ana.panel' }}">Ana sayfa</a>
+      <a href="{{ url_for('urunler.liste') }}" class="{{ 'aktif' if ep in ('urunler.liste', 'urunler.detay', 'urunler.duzenle', 'urunler.yeni') }}">Ürünler</a>
+      {% if kullanici.rol == 'admin' %}
+        <div class="menu-grup">Yönetim</div>
+        <a href="{{ url_for('urunler.toplu_fiyat') }}" class="{{ 'aktif' if ep == 'urunler.toplu_fiyat' }}">Toplu fiyat girişi</a>
+        <a href="{{ url_for('yonetim.markalar') }}" class="{{ 'aktif' if ep.startswith('yonetim.marka') }}">Marka / model</a>
+        <a href="{{ url_for('yonetim.kullanicilar') }}" class="{{ 'aktif' if ep.startswith('yonetim.kullanici') }}">Kullanıcılar</a>
+        <a href="{{ url_for('yonetim.islem_kaydi') }}" class="{{ 'aktif' if ep == 'yonetim.islem_kaydi' }}">İşlem kaydı</a>
+      {% endif %}
+    </nav>
+    <div class="yan-alt">
+      <div class="oturum">
+        <strong>{{ kullanici.ad_soyad }}</strong>
+        <span>{{ 'Yönetici' if kullanici.rol == 'admin' else 'Kullanıcı' }}</span>
+      </div>
+      <a href="{{ url_for('auth.sifre_degistir') }}">Şifre değiştir</a>
+      <form method="post" action="{{ url_for('auth.cikis') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="baglanti-dugme">Çıkış yap</button>
+      </form>
+    </div>
+  </aside>
+  <div class="perde" data-menu-kapat></div>
+{% endif %}
+
+<main class="{{ 'icerik' if kullanici else 'yalin-icerik' }}">
+  {% with mesajlar = get_flashed_messages(with_categories=true) %}
+    {% if mesajlar %}
+      <div class="mesajlar">
+        {% for tur, mesaj in mesajlar %}
+          <div class="mesaj mesaj-{{ tur }}" role="status">{{ mesaj }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block icerik %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

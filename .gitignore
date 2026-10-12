@@ -1,0 +1,16 @@
+# Canlı veriler ve gizli anahtar — asla depoya girmez
+veri/
+*.sqlite3
+*.sqlite3-*
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# cPanel / Passenger
+tmp/
+.htaccess
+stderr.log

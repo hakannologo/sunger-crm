@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import alan, csrf %}
+{% block baslik %}{{ 'Ürünü düzenle' if u else 'Yeni ürün' }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('urunler.detay', urun_id=u.id) if u else url_for('urunler.liste') }}">‹ Geri</a>
+<div class="sayfa-baslik"><h1>{{ 'Ürünü düzenle' if u else 'Yeni ürün' }}</h1></div>
+
+<form method="post" class="kart orta">
+  {{ csrf() }}
+  <div class="satir-alanlar">
+    {{ alan('kod', 'Ürün kodu', form.kod, hatalar=hatalar, zorunlu=true, ipucu='Örn. SM-FIAT-040', ozellikler='autocapitalize="characters"') }}
+    <div class="alan{{ ' hatali' if hatalar.parca_tipi }}">
+      <label for="a-parca_tipi">Parça tipi <span class="zorunlu">*</span></label>
+      <select id="a-parca_tipi" name="parca_tipi" required>
+        {% for t in tipler %}<option {{ 'selected' if form.parca_tipi == t }}>{{ t }}</option>{% endfor %}
+      </select>
+      {% if hatalar.parca_tipi %}<div class="alan-hata">{{ hatalar.parca_tipi }}</div>{% endif %}
+    </div>
+  </div>
+  {{ alan('ad', 'Ürün adı', form.ad, hatalar=hatalar, zorunlu=true) }}
+  {{ alan('kategori', 'Kategori', form.kategori, hatalar=hatalar, zorunlu=true,
+          ipucu='Listeden seçin ya da yeni kategori adı yazın.', ozellikler='list="kategori-listesi" autocomplete="off"') }}
+  <datalist id="kategori-listesi">{% for k in kategoriler %}<option value="{{ k }}">{% endfor %}</datalist>
+  <div class="satir-alanlar">
+    {{ alan('perakende', 'Perakende fiyat (₺)', form.perakende, hatalar=hatalar, ipucu='Boş bırakılabilir.', ozellikler='inputmode="decimal" placeholder="0,00"') }}
+    {{ alan('toptan', 'Toptan fiyat (₺)', form.toptan, hatalar=hatalar, ipucu='Boş bırakılabilir.', ozellikler='inputmode="decimal" placeholder="0,00"') }}
+  </div>
+  <label class="onay"><input type="checkbox" name="aktif" value="1" {{ 'checked' if form.aktif }}> Aktif (satışta görünsün)</label>
+  {% if u %}<p class="soluk kucuk">Ürünler silinmez; geçmiş satışlarda kayıtlı kalması için satıştan kaldırmak istediğinizde pasife alın.</p>{% endif %}
+  <div class="form-alt">
+    <button type="submit" class="dugme">Kaydet</button>
+    <a href="{{ url_for('urunler.detay', urun_id=u.id) if u else url_for('urunler.liste') }}" class="dugme dugme-ikincil">Vazgeç</a>
+  </div>
+</form>
+{% endblock %}

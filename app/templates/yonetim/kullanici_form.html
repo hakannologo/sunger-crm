@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import alan, csrf %}
+{% block baslik %}{{ 'Kullanıcıyı düzenle' if k else 'Yeni kullanıcı' }}{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('yonetim.kullanicilar') }}">‹ Kullanıcılar</a>
+<div class="sayfa-baslik"><h1>{{ k.ad_soyad if k else 'Yeni kullanıcı' }}</h1></div>
+
+<form method="post" class="kart dar">
+  {{ csrf() }}
+  {{ alan('ad_soyad', 'Ad soyad', form.ad_soyad, hatalar=hatalar, zorunlu=true) }}
+  {% if k %}
+  <div class="alan">
+    <label>Kullanıcı adı</label>
+    <div class="salt-okunur kod">{{ k.kullanici_adi }}</div>
+  </div>
+  {% else %}
+  {{ alan('kullanici_adi', 'Kullanıcı adı', form.kullanici_adi, hatalar=hatalar, zorunlu=true,
+          ipucu='Girişte kullanılır. Küçük harf, Türkçe karakter olmadan (ör. mehmet).', ozellikler='autocapitalize="none" autocomplete="off"') }}
+  {% endif %}
+
+  <div class="alan{{ ' hatali' if hatalar.rol }}">
+    <label for="a-rol">Rol</label>
+    <select id="a-rol" name="rol" {{ 'disabled' if kendisi }}>
+      {% for anahtar, ad in roller.items() %}<option value="{{ anahtar }}" {{ 'selected' if form.rol == anahtar }}>{{ ad }}</option>{% endfor %}
+    </select>
+    {% if kendisi %}<input type="hidden" name="rol" value="{{ form.rol }}">{% endif %}
+    {% if hatalar.rol %}<div class="alan-hata">{{ hatalar.rol }}</div>{% endif %}
+  </div>
+
+  {% if k %}
+    {% if kendisi %}<input type="hidden" name="aktif" value="1">
+    {% else %}
+    <label class="onay"><input type="checkbox" name="aktif" value="1" {{ 'checked' if form.aktif }}> Aktif (giriş yapabilsin)</label>
+    {% endif %}
+    <fieldset class="alan-grubu">
+      <legend>Şifreyi sıfırla</legend>
+      <p class="soluk kucuk">Değiştirmek istemiyorsanız boş bırakın.</p>
+      {{ alan('sifre', 'Yeni şifre', tur='password', hatalar=hatalar, ozellikler='autocomplete="new-password"') }}
+      {{ alan('sifre2', 'Yeni şifre (tekrar)', tur='password', hatalar=hatalar, ozellikler='autocomplete="new-password"') }}
+    </fieldset>
+  {% else %}
+    {{ alan('sifre', 'Şifre', tur='password', hatalar=hatalar, zorunlu=true, ipucu='En az 6 karakter. Kullanıcı girdikten sonra kendisi değiştirebilir.', ozellikler='autocomplete="new-password"') }}
+    {{ alan('sifre2', 'Şifre (tekrar)', tur='password', hatalar=hatalar, zorunlu=true, ozellikler='autocomplete="new-password"') }}
+  {% endif %}
+
+  <div class="form-alt">
+    <button type="submit" class="dugme">Kaydet</button>
+    <a href="{{ url_for('yonetim.kullanicilar') }}" class="dugme dugme-ikincil">Vazgeç</a>
+  </div>
+</form>
+{% endblock %}

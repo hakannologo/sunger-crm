@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import alan, csrf %}
+{% block baslik %}İlk kurulum{% endblock %}
+{% block govde_sinifi %}giris-sayfasi{% endblock %}
+{% block icerik %}
+<div class="giris-kutu genis">
+  <div class="giris-baslik">
+    <div class="logo-isaret" aria-hidden="true"></div>
+    <h1>Hoş geldiniz</h1>
+    <p>Programı kullanmaya başlamak için yönetici hesabını oluşturun. Bu ekran sadece bir kez açılır.</p>
+  </div>
+  <form method="post" class="kart">
+    {{ csrf() }}
+    {{ alan('ad_soyad', 'Ad soyad', form.ad_soyad, hatalar=hatalar, zorunlu=true, ozellikler='autofocus') }}
+    {{ alan('kullanici_adi', 'Kullanıcı adı', form.kullanici_adi, hatalar=hatalar, zorunlu=true,
+            ipucu='Örn. hakan — küçük harf, Türkçe karakter olmadan.', ozellikler='autocapitalize="none" autocomplete="username"') }}
+    {{ alan('sifre', 'Şifre', tur='password', hatalar=hatalar, zorunlu=true, ipucu='En az 6 karakter.', ozellikler='autocomplete="new-password"') }}
+    {{ alan('sifre2', 'Şifre (tekrar)', tur='password', hatalar=hatalar, zorunlu=true, ozellikler='autocomplete="new-password"') }}
+    <button type="submit" class="dugme dugme-genis">Yönetici hesabını oluştur</button>
+  </form>
+</div>
+{% endblock %}
