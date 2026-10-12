@@ -14,3 +14,6 @@ venv/
 tmp/
 .htaccess
 stderr.log
+
+# cPanel tarafından oluşturulanlar
+public/

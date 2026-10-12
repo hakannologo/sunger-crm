@@ -1,8 +1,12 @@
-# cPanel "Git Version Control" → "Deploy HEAD Commit" ile çalışır.
-# Uygulama doğrudan depo klasöründen çalıştığı için dosya kopyalamaya gerek yok;
-# sadece Passenger'a uygulamayı yeniden başlatmasını söylüyoruz.
+# cPanel "Git Version Control" → "Deploy HEAD Commit" basılınca çalışır.
+# Programı (app/), başlatıcıyı (cgi-bin/app.cgi) ve yönlendirme ayarını (.htaccess)
+# sitenin klasörüne kopyalar. Veriler (crm-veri/) ve packages/ klasörüne dokunulmaz.
 ---
 deployment:
   tasks:
-    - /bin/mkdir -p tmp
-    - /bin/touch tmp/restart.txt
+    - export DEPLOYPATH=/home/koltuksungeri/crm.koltuksungeri.com/
+    - /bin/mkdir -p ${DEPLOYPATH}cgi-bin
+    - /bin/cp -R app ${DEPLOYPATH}
+    - /bin/cp kurulum/app.cgi ${DEPLOYPATH}cgi-bin/app.cgi
+    - /bin/chmod 755 ${DEPLOYPATH}cgi-bin/app.cgi
+    - /bin/cp kurulum/htaccess ${DEPLOYPATH}.htaccess
