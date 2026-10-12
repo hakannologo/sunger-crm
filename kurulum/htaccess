@@ -1,0 +1,13 @@
+Options -Indexes
+RewriteEngine On
+
+# SSL doğrulaması (AutoSSL) için
+RewriteRule ^\.well-known/ - [L]
+
+# Stil ve script dosyaları doğrudan sunulur
+RewriteRule ^app/static/ - [L]
+RewriteRule ^static/(.*)$ app/static/$1 [L]
+
+# Geri kalan her şey programa gider
+RewriteCond %{REQUEST_URI} !^/cgi-bin/app\.cgi
+RewriteRule ^(.*)$ /cgi-bin/app.cgi/$1 [L,QSA]

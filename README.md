@@ -18,7 +18,16 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
 Sıradaki aşamalar: müşteri ve araç kayıtları, satış/sipariş ve kargo, ödeme, kapıda ödeme takibi,
 cari hesap, alacak takvimi, raporlar ve Excel'e aktarma.
 
-## cPanel'e kurulum (ilk sefer)
+## cPanel'e kurulum — CGI yöntemi (önerilen)
+
+Bu sunucuda Setup Python App yerine Günaydın CRM ile aynı CGI yöntemi kullanılır:
+
+1. `python3 kurulum/paketle.py <python3.11 packages klasörü> sunger-crm-kurulum.zip`
+2. Zip'i alan adının belge kök dizinine (ör. `crm.koltuksungeri.com/`) yükleyip açın.
+3. `cgi-bin/app.cgi` izni 0755 olmalı.
+4. Veriler belge kökünün yanındaki `crm-veri/` klasöründe tutulur (internetten erişilemez).
+
+## cPanel'e kurulum — Setup Python App yöntemi (alternatif)
 
 1. **Alt alan adı:** cPanel → *Domains* → yeni alt alan adı (ör. `crm.sungermerkezi.com`).
    SSL'in açık olduğundan emin olun (*SSL/TLS Status* → AutoSSL).
