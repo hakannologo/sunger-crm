@@ -2,9 +2,11 @@
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 from .db import baglanti, sorgu, tr_kucuk
+from .tahsilat import ekstre, kalan, musteri_bakiye, satis_odeme_ayarla
 from .talepler import kalemler as talep_kalemleri, talep_getir
-from .yardimci import (ARAS_TAKIP, KANALLAR, ODEME_SEKILLERI, SATIS_DURUMLARI, TALEP_DURUMLARI, Sayfa,
-                       giris_gerekli, islem_kaydet, sayfa_no, simdi, tel_normal, tl_yaz, whatsapp_link)
+from .yardimci import (ARAS_TAKIP, KANALLAR, ODEME_SEKILLERI, SATIS_DURUMLARI, TAHSILAT_YONTEMLERI, TALEP_DURUMLARI,
+                       VARSAYILAN_VADE_GUN, Sayfa, bugun, giris_gerekli, islem_kaydet, sayfa_no, simdi, tel_normal,
+                       tl_yaz, whatsapp_link)
 
 bp = Blueprint("satislar", __name__)
 
@@ -85,6 +87,7 @@ def talepten_satis(talep_id):
                     "INSERT INTO satis_kalemleri (satis_id, urun_id, urun_adi, adet, birim_kurus) VALUES (?, ?, ?, ?, ?)",
                     (satis_id, k["urun_id"], k["urun_adi"], k["adet"], k["birim_kurus"]),
                 )
+            satis_odeme_ayarla(db, satis_id)
             db.execute(
                 """UPDATE talepler SET durum = 'satis', hatirlatma = NULL, satis_id = ?, musteri_id = ?,
                        ad = COALESCE(ad, ?), telefon = COALESCE(telefon, ?), guncelleme = ? WHERE id = ?""",
@@ -165,8 +168,13 @@ def satis_detay(satis_id):
     if s["takip_no"]:
         mesaj = (f"Merhaba {s['musteri']}, siparişiniz Aras Kargo'ya verildi. Takip no: {s['takip_no']} "
                  f"— {ARAS_TAKIP}{s['takip_no']}")
+    tahsilatlar = sorgu(
+        """SELECT t.*, k.ad_soyad FROM tahsilatlar t LEFT JOIN kullanicilar k ON k.id = t.kullanici_id
+           WHERE t.satis_id = ? ORDER BY t.tarih, t.id""", (satis_id,))
     return render_template(
         "satislar/detay.html", s=s, kalemler=kl, durumlar=SATIS_DURUMLARI, odemeler=ODEME_SEKILLERI,
+        tahsilatlar=tahsilatlar, kalan=kalan(satis_id), odenen=sum(t["tutar_kurus"] for t in tahsilatlar),
+        yontemler=TAHSILAT_YONTEMLERI, bugun=bugun(),
         aras=ARAS_TAKIP, wa=whatsapp_link(s["telefon"]), wa_kargo=whatsapp_link(s["telefon"], mesaj) if mesaj else None,
     )
 
@@ -185,9 +193,15 @@ def satis_guncelle(satis_id):
     if takip_no and durum == "hazirlaniyor" and not s["takip_no"]:
         durum = "kargoda"
     notlar = request.form.get("notlar", "").strip() or None
+    teslim = s["teslim_tarihi"]
+    if durum == "teslim" and not teslim:
+        teslim = bugun()
+    elif durum != "teslim":
+        teslim = None
     db = baglanti()
-    db.execute("UPDATE satislar SET durum = ?, takip_no = ?, odeme = ?, notlar = ?, guncelleme = ? WHERE id = ?",
-               (durum, takip_no, odeme, notlar, simdi(), satis_id))
+    db.execute("""UPDATE satislar SET durum = ?, takip_no = ?, odeme = ?, notlar = ?, teslim_tarihi = ?, guncelleme = ?
+                  WHERE id = ?""", (durum, takip_no, odeme, notlar, teslim, simdi(), satis_id))
+    satis_odeme_ayarla(db, satis_id)
     degisen = []
     if durum != s["durum"]:
         degisen.append(f"durum: {SATIS_DURUMLARI[s['durum']]} → {SATIS_DURUMLARI[durum]}")
@@ -235,7 +249,9 @@ def musteri_liste():
     satirlar = sorgu(
         f"""SELECT m.*, (SELECT COUNT(*) FROM satislar s WHERE s.musteri_id = m.id) AS satis_sayisi,
                    (SELECT COALESCE(SUM(toplam_kurus), 0) FROM satislar s WHERE s.musteri_id = m.id AND s.durum != 'iade') AS ciro,
-                   (SELECT MAX(olusturma) FROM satislar s WHERE s.musteri_id = m.id) AS son_satis
+                   (SELECT MAX(olusturma) FROM satislar s WHERE s.musteri_id = m.id) AS son_satis,
+                   (SELECT COALESCE(SUM(toplam_kurus), 0) FROM satislar s WHERE s.musteri_id = m.id AND s.durum != 'iade')
+                   - (SELECT COALESCE(SUM(tutar_kurus), 0) FROM tahsilatlar t WHERE t.musteri_id = m.id) AS bakiye
             FROM musteriler m {where} ORDER BY m.id DESC LIMIT ? OFFSET ?""",
         tuple(param) + (sayfa.boyut, sayfa.ofset),
     )
@@ -250,7 +266,9 @@ def musteri_detay(musteri_id):
     if request.method == "POST":
         fm = request.form
         v = {k: fm.get(k, "").strip() for k in ("ad", "telefon", "sosyal", "tip", "firma_adi", "vergi_no",
-                                                 "vergi_dairesi", "sehir", "adres", "notlar")}
+                                                 "vergi_dairesi", "sehir", "adres", "notlar", "vade_gun")}
+        if v["vade_gun"] and not (v["vade_gun"].isdigit() and 0 < int(v["vade_gun"]) <= 365):
+            hatalar["vade_gun"] = "1-365 arası gün sayısı yazın."
         tel = tel_normal(v["telefon"])
         if not v["ad"]:
             hatalar["ad"] = "Ad gerekli."
@@ -262,10 +280,11 @@ def musteri_detay(musteri_id):
             db = baglanti()
             db.execute(
                 """UPDATE musteriler SET ad = ?, telefon = ?, sosyal = ?, tip = ?, firma_adi = ?, vergi_no = ?,
-                       vergi_dairesi = ?, sehir = ?, adres = ?, notlar = ?, guncelleme = ? WHERE id = ?""",
+                       vergi_dairesi = ?, sehir = ?, adres = ?, notlar = ?, vade_gun = ?, guncelleme = ?
+                   WHERE id = ?""",
                 (v["ad"], tel, v["sosyal"].lstrip("@") or None, v["tip"], v["firma_adi"] or None,
                  v["vergi_no"] or None, v["vergi_dairesi"] or None, v["sehir"] or None, v["adres"] or None,
-                 v["notlar"] or None, simdi(), musteri_id),
+                 v["notlar"] or None, int(v["vade_gun"]) if v["vade_gun"] else None, simdi(), musteri_id),
             )
             islem_kaydet("Müşteri güncellendi", f"#{musteri_id} — {v['ad']}")
             db.commit()
@@ -289,5 +308,6 @@ def musteri_detay(musteri_id):
     return render_template(
         "musteriler/detay.html", m=m, hatalar=hatalar, satislar=satislar, talepler=talepler, ciro=ciro,
         wa=whatsapp_link(m["telefon"]), durumlar=SATIS_DURUMLARI, talep_durumlari=TALEP_DURUMLARI,
-        odemeler=ODEME_SEKILLERI, kanallar=KANALLAR,
+        odemeler=ODEME_SEKILLERI, kanallar=KANALLAR, bakiye=musteri_bakiye(musteri_id), ekstre=ekstre(musteri_id),
+        yontemler=TAHSILAT_YONTEMLERI, bugun=bugun(), varsayilan_vade=VARSAYILAN_VADE_GUN,
     ), (400 if hatalar else 200)

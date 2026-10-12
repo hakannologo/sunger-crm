@@ -363,3 +363,40 @@ textarea { font: inherit; color: var(--yazi); background: #fff; border: 1px soli
 .sebep-listesi li { display: flex; justify-content: space-between; padding: .45rem 0; border-bottom: 1px solid #efece6; }
 
 [hidden] { display: none !important; }
+
+/* ---------- 3. aşama: tahsilat ---------- */
+.odeme-ozet { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; margin: .25rem 0 1rem; }
+.odeme-ozet > div { background: #faf9f6; border: 1px solid #efece6; border-radius: 8px; padding: .6rem .8rem; display: flex; flex-direction: column; }
+.odeme-ozet strong { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.yesil-yazi { color: var(--basari-yazi); }
+.rozet-yesil { background: var(--basari-acik); color: var(--basari-yazi); }
+.tahsilat-ac { border-top: 1px solid var(--cizgi); padding-top: .75rem; margin-top: .5rem; }
+.tahsilat-ac summary { cursor: pointer; font-weight: 600; color: var(--ana); margin-bottom: .75rem; }
+.satir-ici-form { display: inline; margin: 0 0 0 .5rem; }
+.gecikti-satir td:first-child { box-shadow: inset 3px 0 0 var(--kirmizi); }
+.sayac-kirmizi { border-color: #f2c9c3; background: var(--kirmizi-acik); }
+.sayac-kirmizi .sayac-deger { color: var(--kirmizi); }
+.sayac .sayac-deger { font-size: 1.55rem; }
+
+/* Takvim */
+.takvim { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: .75rem; }
+.takvim-gun-adi { font-size: .75rem; font-weight: 700; text-transform: uppercase; color: var(--soluk); padding: .25rem .4rem; }
+.takvim-gun { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 8px; min-height: 96px; padding: .35rem; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.takvim-gun.baska-ay { background: transparent; border-style: dashed; opacity: .55; }
+.takvim-gun.bugun { border: 2px solid var(--vurgu); }
+.takvim-gun.gecmis { background: var(--kirmizi-acik); border-color: #f2c9c3; }
+.takvim-tarih { font-size: .8rem; font-weight: 700; color: var(--soluk); }
+.takvim-gun-kisa { display: none; }
+.takvim-kalem { display: flex; justify-content: space-between; gap: .3rem; font-size: .76rem; border-radius: 5px; padding: .15rem .35rem; color: var(--yazi); min-width: 0; }
+.takvim-kalem span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.takvim-kalem strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.takvim-kalem:hover { text-decoration: none; filter: brightness(.95); }
+.kalem-aras { background: #e8eef8; }
+.kalem-vadeli { background: #efe7fb; }
+.lejant { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; vertical-align: -1px; margin: 0 .2rem 0 .6rem; }
+@media (max-width: 800px) {
+  .takvim { grid-template-columns: 1fr; }
+  .takvim-gun-adi, .takvim-gun.baska-ay, .takvim-gun:not(.dolu):not(.bugun) { display: none; }
+  .takvim-gun { min-height: 0; }
+  .takvim-gun-kisa { display: inline; }
+}

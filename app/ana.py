@@ -2,6 +2,7 @@
 from flask import Blueprint, g, render_template
 
 from .db import sorgu
+from .tahsilat import ozet as alacak_ozeti
 from .yardimci import KANALLAR, TALEP_DURUMLARI, bugun, giris_gerekli
 
 bp = Blueprint("ana", __name__)
@@ -38,6 +39,6 @@ def panel():
         tek=True,
     )
     return render_template(
-        "panel.html", hatirlatmalar=hatirlatmalar, sayilar=sayilar, bugun=bugun_, admin=admin,
+        "panel.html", hatirlatmalar=hatirlatmalar, sayilar=sayilar, bugun=bugun_, admin=admin, alacak=alacak_ozeti(),
         kanallar=KANALLAR, durumlar=TALEP_DURUMLARI,
     )

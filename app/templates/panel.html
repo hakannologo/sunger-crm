@@ -62,6 +62,18 @@
     <span class="sayac-deger">{{ sayilar.acik_talep }}</span>
     <span class="sayac-etiket">Açık talep (fiyat verildi / düşünüyor)</span>
   </a>
+  <a class="sayac" href="{{ url_for('tahsilat.alacaklar') }}">
+    <span class="sayac-deger">{{ alacak.aras|tl }}</span>
+    <span class="sayac-etiket">Aras'tan beklenen ({{ alacak.aras_adet }})</span>
+  </a>
+  <a class="sayac {{ 'sayac-kirmizi' if alacak.geciken }}" href="{{ url_for('tahsilat.alacaklar') }}">
+    <span class="sayac-deger">{{ alacak.geciken|tl }}</span>
+    <span class="sayac-etiket">Vadesi geçen alacak ({{ alacak.geciken_adet }})</span>
+  </a>
+  <a class="sayac {{ 'sayac-uyari' if alacak.bugun }}" href="{{ url_for('tahsilat.takvim') }}">
+    <span class="sayac-deger">{{ alacak.bugun|tl }}</span>
+    <span class="sayac-etiket">Bugün tahsil edilecek ({{ alacak.bugun_adet }})</span>
+  </a>
   <a class="sayac {{ 'sayac-uyari' if sayilar.hazirlanan }}" href="{{ url_for('satislar.satis_liste', durum='hazirlaniyor') }}">
     <span class="sayac-deger">{{ sayilar.hazirlanan }}</span>
     <span class="sayac-etiket">Hazırlanacak sipariş</span>

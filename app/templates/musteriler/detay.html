@@ -7,7 +7,9 @@
   <div>
     <h1>{{ m.ad }}</h1>
     <p class="soluk">{% if m.tip == 'toptan' %}<span class="rozet rozet-toptan">Toptan</span> {{ m.firma_adi or '' }}{% else %}Bireysel{% endif %}
-      · {{ satislar|length }} satış · {{ ciro|tl }}</p>
+      · {{ satislar|length }} satış · {{ ciro|tl }}
+      {% if bakiye.bakiye > 0 %} · <a href="#cari" class="gecikti-yazi">Borç: {{ bakiye.bakiye|tl }}</a>
+      {% elif bakiye.bakiye < 0 %} · <a href="#cari">Alacaklı: {{ (-bakiye.bakiye)|tl }}</a>{% endif %}</p>
   </div>
   <div class="baslik-dugmeler">
     {% if m.telefon %}
@@ -16,6 +18,49 @@
       <a class="dugme" href="{{ url_for('talepler.yeni', tel=m.telefon) }}">+ Yeni talep</a>
     {% endif %}
   </div>
+</div>
+
+<div class="kart" id="cari">
+  <div class="kart-baslik"><h2>Cari hesap</h2><span class="soluk kucuk">Vade: {{ m.vade_gun or varsayilan_vade }} gün</span></div>
+  <div class="odeme-ozet">
+    <div><span class="soluk">Toplam alış</span><strong>{{ bakiye.borc|tl }}</strong></div>
+    <div><span class="soluk">Ödenen</span><strong class="yesil-yazi">{{ bakiye.odenen|tl }}</strong></div>
+    <div><span class="soluk">{{ 'Bakiye (borç)' if bakiye.bakiye >= 0 else 'Bakiye (alacaklı)' }}</span>
+      <strong class="{{ 'gecikti-yazi' if bakiye.bakiye > 0 }}">{{ (bakiye.bakiye if bakiye.bakiye >= 0 else -bakiye.bakiye)|tl }}</strong></div>
+  </div>
+  <details class="tahsilat-ac" {{ 'open' if bakiye.bakiye > 0 and m.tip == 'toptan' }}>
+    <summary>Tahsilat gir</summary>
+    <form method="post" action="{{ url_for('tahsilat.musteri_tahsilat', musteri_id=m.id) }}">
+      {{ csrf() }}
+      <div class="satir-alanlar">
+        <div class="alan"><label for="c-tutar">Tutar (₺)</label><input id="c-tutar" name="tutar" inputmode="decimal" required placeholder="{{ bakiye.bakiye|tl_girdi if bakiye.bakiye > 0 else '' }}"></div>
+        <div class="alan"><label for="c-yontem">Yöntem</label>
+          <select id="c-yontem" name="yontem">{% for k, ad in yontemler.items() %}<option value="{{ k }}">{{ ad }}</option>{% endfor %}</select></div>
+        <div class="alan"><label for="c-tarih">Tarih</label><input id="c-tarih" type="date" name="tarih" value="{{ bugun }}"></div>
+      </div>
+      <div class="alan"><label for="c-aciklama">Açıklama</label><input id="c-aciklama" name="aciklama" placeholder="ör. Ekim ödemesi"></div>
+      <button type="submit" class="dugme">Kaydet</button>
+      <p class="soluk kucuk">Ödeme en eski borçtan başlayarak satışlara dağıtılır; fazlası hesaba alacak yazılır.</p>
+    </form>
+  </details>
+  {% if ekstre %}
+  <h3 class="ara-baslik">Hesap ekstresi</h3>
+  <div class="tablo-sarmal"><table class="tablo">
+    <thead><tr><th>Tarih</th><th>Açıklama</th><th class="sag">Borç</th><th class="sag">Ödeme</th><th class="sag">Bakiye</th></tr></thead>
+    <tbody>
+      {% for r in ekstre %}
+      <tr>
+        <td class="nowrap">{{ r.tarih|tarih(false) }}</td>
+        <td>{% if r.tur == 'satis' %}<a href="{{ url_for('satislar.satis_detay', satis_id=r.id) }}">{{ r.aciklama|truncate(60) }}</a>{% else %}{{ r.aciklama }}{% endif %}
+          <div class="alt-bilgi">{{ r.not }}</div></td>
+        <td class="sag tutar">{{ r.borc|tl if r.borc else '' }}</td>
+        <td class="sag tutar yesil-yazi">{{ r.alacak|tl if r.alacak else '' }}</td>
+        <td class="sag tutar"><strong>{{ r.bakiye|tl }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
 </div>
 
 <div class="iki-sutun">
@@ -75,6 +120,7 @@
       </select>
     </div>
     {{ alan('firma_adi', 'Firma adı', m.firma_adi or '', hatalar=hatalar) }}
+    {{ alan('vade_gun', 'Vade (gün)', m.vade_gun or '', hatalar=hatalar, ipucu='Vadeli satışlarda ödeme bu kadar gün sonra beklenir. Boşsa ' ~ varsayilan_vade ~ ' gün.', ozellikler='inputmode="numeric"') }}
     <div class="satir-alanlar">
       {{ alan('vergi_no', 'Vergi no', m.vergi_no or '', hatalar=hatalar) }}
       {{ alan('vergi_dairesi', 'Vergi dairesi', m.vergi_dairesi or '', hatalar=hatalar) }}

@@ -21,7 +21,12 @@ KAYIP_SEBEPLERI = ["Pahalı buldu", "Başka yerden aldı", "Cevap vermedi", "Vaz
 SATIS_DURUMLARI = {"hazirlaniyor": "Hazırlanıyor", "kargoda": "Kargoda",
                    "teslim": "Teslim edildi", "iade": "İade"}
 ODEME_SEKILLERI = {"nakit": "Nakit", "kart": "Kredi kartı", "havale": "Havale / EFT",
-                   "kapida": "Kapıda ödeme"}
+                   "kapida": "Kapıda ödeme", "vadeli": "Vadeli (cari hesap)"}
+PESIN_ODEMELER = ("nakit", "kart", "havale")
+TAHSILAT_YONTEMLERI = {"nakit": "Nakit", "kart": "Kredi kartı", "havale": "Havale / EFT",
+                       "kapida": "Aras (kapıda ödeme)", "diger": "Diğer"}
+KAPIDA_BEKLEME_GUN = 3
+VARSAYILAN_VADE_GUN = 30
 ARAS_TAKIP = "https://kargotakip.araskargo.com.tr/mainpage.aspx?code="
 
 
@@ -33,6 +38,11 @@ def simdi():
 def bugun(gun_ekle=0):
     """Türkiye saatiyle 'YYYY-AA-GG' (isteğe bağlı gün eklenmiş)."""
     return (datetime.now(TR_SAAT) + timedelta(days=gun_ekle)).strftime("%Y-%m-%d")
+
+
+def gun_ekle(tarih, gun):
+    """'YYYY-AA-GG' + gün -> 'YYYY-AA-GG'."""
+    return (datetime.strptime(tarih[:10], "%Y-%m-%d") + timedelta(days=gun)).strftime("%Y-%m-%d")
 
 
 def tarih_oku(metin):

@@ -65,7 +65,63 @@
       <input id="a-not" name="notlar" value="{{ s.notlar or '' }}">
     </div>
     <div class="form-alt"><button type="submit" class="dugme">Kaydet</button></div>
-    <p class="soluk kucuk">Tahsilat takibi (kapıda ödeme parası geldi mi, havale yattı mı) bir sonraki aşamada eklenecek.</p>
+    {% if s.odeme == 'kapida' %}<p class="soluk kucuk">Kapıda ödeme: “Teslim edildi” seçilince para {{ 3 }} gün içinde Aras'tan beklenir.</p>{% endif %}
   </form>
+</div>
+
+<div class="kart" id="odeme">
+  <div class="kart-baslik">
+    <h2>Ödeme</h2>
+    {% if s.durum == 'iade' %}<span class="rozet satis-iade">İade — alacak yok</span>
+    {% elif kalan == 0 %}<span class="rozet rozet-yesil">Ödendi</span>
+    {% elif s.vade_tarihi and s.vade_tarihi < bugun %}<span class="rozet rozet-kirmizi">Gecikti</span>
+    {% elif s.odeme == 'kapida' and s.durum != 'teslim' %}<span class="rozet satis-kargoda">Teslimde Aras tahsil edecek</span>
+    {% else %}<span class="rozet satis-hazirlaniyor">Bekleniyor</span>{% endif %}
+  </div>
+  <div class="odeme-ozet">
+    <div><span class="soluk">Tutar</span><strong>{{ s.toplam_kurus|tl }}</strong></div>
+    <div><span class="soluk">Ödenen</span><strong class="yesil-yazi">{{ odenen|tl }}</strong></div>
+    <div><span class="soluk">Kalan</span><strong class="{{ 'gecikti-yazi' if kalan and s.vade_tarihi and s.vade_tarihi < bugun }}">{{ kalan|tl }}</strong></div>
+    <div><span class="soluk">{{ 'Aras ödeme günü' if s.odeme == 'kapida' else 'Vade' }}</span><strong>{{ s.vade_tarihi|tarih(false) if s.vade_tarihi else '—' }}</strong></div>
+  </div>
+
+  {% if tahsilatlar %}
+  <ul class="islem-listesi">
+    {% for t in tahsilatlar %}
+    <li><span class="zaman">{{ t.tarih|tarih(false) }}</span>
+      <span><strong>{{ t.tutar_kurus|tl }}</strong> — {{ yontemler.get(t.yontem, t.yontem) }}{% if t.aciklama %} · {{ t.aciklama }}{% endif %}</span>
+      <span class="kim">{{ t.ad_soyad or '' }}
+        {% if kullanici.rol == 'admin' %}
+        <form method="post" action="{{ url_for('tahsilat.tahsilat_sil', tahsilat_id=t.id) }}" data-onay="Bu tahsilat silinsin mi?" class="satir-ici-form">
+          {{ csrf() }}<button type="submit" class="baglanti-dugme tehlike">Sil</button>
+        </form>
+        {% endif %}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if kalan > 0 %}
+    {% if s.odeme == 'kapida' and s.durum == 'teslim' %}
+    <form method="post" action="{{ url_for('tahsilat.satis_tahsilat', satis_id=s.id) }}" class="satir-form">
+      {{ csrf() }}<input type="hidden" name="yontem" value="kapida">
+      <button type="submit" class="dugme">Aras'tan para geldi ({{ kalan|tl }})</button>
+    </form>
+    {% endif %}
+    <details class="tahsilat-ac" {{ 'open' if s.odeme == 'vadeli' }}>
+      <summary>Tahsilat gir</summary>
+      <form method="post" action="{{ url_for('tahsilat.satis_tahsilat', satis_id=s.id) }}">
+        {{ csrf() }}
+        <div class="satir-alanlar">
+          <div class="alan"><label for="t-tutar">Tutar (₺)</label><input id="t-tutar" name="tutar" inputmode="decimal" placeholder="{{ kalan|tl_girdi }}"></div>
+          <div class="alan"><label for="t-yontem">Yöntem</label>
+            <select id="t-yontem" name="yontem">{% for k, ad in yontemler.items() %}<option value="{{ k }}" {{ 'selected' if (s.odeme == 'kapida' and k == 'kapida') or (s.odeme != 'kapida' and k == 'nakit') }}>{{ ad }}</option>{% endfor %}</select></div>
+          <div class="alan"><label for="t-tarih">Tarih</label><input id="t-tarih" type="date" name="tarih" value="{{ bugun }}"></div>
+        </div>
+        <div class="alan"><label for="t-aciklama">Açıklama</label><input id="t-aciklama" name="aciklama" placeholder="ör. kapora"></div>
+        <button type="submit" class="dugme">Kaydet</button>
+        <p class="soluk kucuk">Tutarı boş bırakırsanız kalanın tamamı ({{ kalan|tl }}) tahsil edilir.</p>
+      </form>
+    </details>
+  {% endif %}
 </div>
 {% endblock %}

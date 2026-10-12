@@ -7,6 +7,7 @@
     <h1>Satışlar</h1>
     <p class="soluk">{{ sayfa.toplam }} satış · Yeni satış, bir talepten “Satışa çevir” ile oluşur.</p>
   </div>
+  {% if kullanici.rol == 'admin' %}<div class="baslik-dugmeler"><a class="dugme dugme-ikincil" href="{{ url_for('tahsilat.disa_aktar', tur='satislar') }}">Excel'e aktar</a></div>{% endif %}
 </div>
 
 <form class="kart filtre" method="get">

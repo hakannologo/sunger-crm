@@ -43,7 +43,8 @@
       {% endfor %}
     </div>
     {% if hatalar.odeme %}<div class="alan-hata">{{ hatalar.odeme }}</div>{% endif %}
-    <p class="soluk kucuk">Kargo: Aras Kargo, karşı ödemeli.</p>
+    <p class="soluk kucuk">Nakit, kart ve havale satışta tahsil edilmiş sayılır. Kapıda ödemede para teslimden 3 gün sonra Aras'tan beklenir.
+      Vadeli satış müşterinin cari hesabına borç yazılır. Kargo: Aras Kargo, karşı ödemeli.</p>
     {{ alan('takip_no', 'Aras takip numarası', v.takip_no, hatalar=hatalar, ipucu='Kargoya verince de girebilirsiniz; girilince durum "Kargoda" olur.') }}
     {{ alan('notlar', 'Not', v.notlar, hatalar=hatalar) }}
     <div class="form-alt">

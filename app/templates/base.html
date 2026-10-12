@@ -28,6 +28,7 @@
       <a href="{{ url_for('ana.panel') }}" class="{{ 'aktif' if ep == 'ana.panel' }}">Ana sayfa</a>
       <a href="{{ url_for('talepler.liste') }}" class="{{ 'aktif' if ep in ('talepler.liste', 'talepler.detay', 'talepler.duzenle') }}">Talepler</a>
       <a href="{{ url_for('satislar.satis_liste') }}" class="{{ 'aktif' if ep in ('satislar.satis_liste', 'satislar.satis_detay', 'satislar.talepten_satis') }}">Satışlar</a>
+      <a href="{{ url_for('tahsilat.alacaklar') }}" class="{{ 'aktif' if ep in ('tahsilat.alacaklar', 'tahsilat.takvim') }}">Alacaklar</a>
       <a href="{{ url_for('satislar.musteri_liste') }}" class="{{ 'aktif' if ep in ('satislar.musteri_liste', 'satislar.musteri_detay') }}">Müşteriler</a>
       <a href="{{ url_for('urunler.liste') }}" class="{{ 'aktif' if ep in ('urunler.liste', 'urunler.detay', 'urunler.duzenle', 'urunler.yeni') }}">Ürünler</a>
       {% if kullanici.rol == 'admin' %}

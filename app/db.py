@@ -260,9 +260,81 @@ def _goc_2_talep_satis_musteri(db):
     )
 
 
+def _goc_3_tahsilat(db):
+    # satislar.odeme'deki CHECK kısıtına 'vadeli' eklemek için tablo yeniden kurulur
+    # (SQLite kısıt değiştirmeye izin vermez). Yabancı anahtar denetimi göç sırasında kapalıdır.
+    db.executescript(
+        """
+        BEGIN;
+        ALTER TABLE musteriler ADD COLUMN vade_gun INTEGER;
+
+        CREATE TABLE satislar_yeni (
+            id INTEGER PRIMARY KEY,
+            talep_id INTEGER REFERENCES talepler (id),
+            musteri_id INTEGER NOT NULL REFERENCES musteriler (id),
+            kullanici_id INTEGER NOT NULL REFERENCES kullanicilar (id),
+            durum TEXT NOT NULL DEFAULT 'hazirlaniyor'
+                CHECK (durum IN ('hazirlaniyor', 'kargoda', 'teslim', 'iade')),
+            odeme TEXT NOT NULL CHECK (odeme IN ('nakit', 'kart', 'havale', 'kapida', 'vadeli')),
+            fiyat_tipi TEXT NOT NULL DEFAULT 'perakende',
+            adres TEXT,
+            sehir TEXT,
+            kargo_firma TEXT NOT NULL DEFAULT 'Aras Kargo',
+            takip_no TEXT,
+            toplam_kurus INTEGER NOT NULL DEFAULT 0,
+            notlar TEXT,
+            teslim_tarihi TEXT,
+            vade_tarihi TEXT,             -- paranın beklendiği gün (kapıda: teslim+3, vadeli: satış+vade)
+            olusturma TEXT NOT NULL,
+            guncelleme TEXT NOT NULL
+        );
+        INSERT INTO satislar_yeni (id, talep_id, musteri_id, kullanici_id, durum, odeme, fiyat_tipi, adres, sehir,
+                                   kargo_firma, takip_no, toplam_kurus, notlar, olusturma, guncelleme)
+            SELECT id, talep_id, musteri_id, kullanici_id, durum, odeme, fiyat_tipi, adres, sehir,
+                   kargo_firma, takip_no, toplam_kurus, notlar, olusturma, guncelleme FROM satislar;
+        DROP TABLE satislar;
+        ALTER TABLE satislar_yeni RENAME TO satislar;
+        CREATE INDEX ix_satis_musteri ON satislar (musteri_id);
+        CREATE INDEX ix_satis_olusturma ON satislar (olusturma);
+        CREATE INDEX ix_satis_vade ON satislar (vade_tarihi);
+
+        CREATE TABLE tahsilatlar (
+            id INTEGER PRIMARY KEY,
+            musteri_id INTEGER NOT NULL REFERENCES musteriler (id),
+            satis_id INTEGER REFERENCES satislar (id),   -- boşsa avans / hesaba ödeme
+            tutar_kurus INTEGER NOT NULL CHECK (tutar_kurus > 0),
+            yontem TEXT NOT NULL,
+            tarih TEXT NOT NULL,          -- YYYY-AA-GG
+            aciklama TEXT,
+            kullanici_id INTEGER REFERENCES kullanicilar (id),
+            olusturma TEXT NOT NULL
+        );
+        CREATE INDEX ix_tahsilat_satis ON tahsilatlar (satis_id);
+        CREATE INDEX ix_tahsilat_musteri ON tahsilatlar (musteri_id, tarih);
+
+        CREATE VIEW satis_odeme AS
+            SELECT s.id AS satis_id,
+                   COALESCE((SELECT SUM(t.tutar_kurus) FROM tahsilatlar t WHERE t.satis_id = s.id), 0) AS odenen
+            FROM satislar s;
+
+        -- Mevcut satışlar: peşin ödenenler tahsil edilmiş sayılır
+        INSERT INTO tahsilatlar (musteri_id, satis_id, tutar_kurus, yontem, tarih, aciklama, kullanici_id, olusturma)
+            SELECT musteri_id, id, toplam_kurus, odeme, substr(olusturma, 1, 10), 'Satışta peşin alındı',
+                   kullanici_id, olusturma
+            FROM satislar WHERE odeme IN ('nakit', 'kart', 'havale') AND toplam_kurus > 0;
+        UPDATE satislar SET vade_tarihi = substr(olusturma, 1, 10) WHERE odeme IN ('nakit', 'kart', 'havale');
+        -- Teslim edilmiş kapıda ödemeliler: para teslimden 3 gün sonra beklenir
+        UPDATE satislar SET teslim_tarihi = substr(guncelleme, 1, 10),
+                            vade_tarihi = date(substr(guncelleme, 1, 10), '+3 day')
+            WHERE odeme = 'kapida' AND durum = 'teslim';
+        """
+    )
+
+
 GOCLER = [
     _goc_1_temel_tablolar,
     _goc_2_talep_satis_musteri,
+    _goc_3_tahsilat,
 ]
 
 
@@ -273,7 +345,8 @@ def guncelle(yol):
         os.makedirs(klasor, exist_ok=True)
     db = sqlite3.connect(yol, timeout=15)
     try:
-        db.execute("PRAGMA foreign_keys = ON")
+        # Göçlerde tablo yeniden kurulurken bağlı kayıtlar silinmesin diye kapalı.
+        db.execute("PRAGMA foreign_keys = OFF")
         surum = db.execute("PRAGMA user_version").fetchone()[0]
         for numara, adim in enumerate(GOCLER[surum:], start=surum + 1):
             with db:

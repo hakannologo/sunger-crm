@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block baslik %}Alacak takvimi{% endblock %}
+{% block icerik %}
+<a class="geri" href="{{ url_for('tahsilat.alacaklar') }}">‹ Alacaklar</a>
+<div class="sayfa-baslik">
+  <div>
+    <h1>Alacak takvimi — {{ ay_adi }} {{ yil }}</h1>
+    <p class="soluk">Bu ay beklenen: <strong>{{ ay_toplam|tl }}</strong></p>
+  </div>
+  <div class="baslik-dugmeler">
+    <a class="dugme dugme-ikincil" href="{{ url_for('tahsilat.takvim', ay=onceki) }}">‹ Önceki</a>
+    <a class="dugme dugme-ikincil" href="{{ url_for('tahsilat.takvim') }}">Bu ay</a>
+    <a class="dugme dugme-ikincil" href="{{ url_for('tahsilat.takvim', ay=sonraki) }}">Sonraki ›</a>
+  </div>
+</div>
+
+{% if geciken %}
+<div class="kart gecikti-kart">
+  <strong>Önceki aylardan vadesi geçmiş {{ geciken|length }} alacak:</strong>
+  {% for a in geciken %}<a href="{{ url_for('satislar.satis_detay', satis_id=a.id) }}#odeme">{{ a.musteri }} ({{ a.kalan|tl }}, {{ a.vade_tarihi|tarih(false) }})</a>{{ ', ' if not loop.last }}{% endfor %}
+</div>
+{% endif %}
+
+<div class="takvim">
+  {% for gun in ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] %}<div class="takvim-gun-adi">{{ gun }}</div>{% endfor %}
+  {% for hafta in haftalar %}
+    {% for d in hafta %}
+      {% set iso = d.isoformat() %}
+      {% set kalemler = gunler.get(iso, []) %}
+      <div class="takvim-gun {{ 'baska-ay' if d.month != ay }} {{ 'bugun' if iso == bugun }} {{ 'dolu' if kalemler }} {{ 'gecmis' if iso < bugun and kalemler }}">
+        <div class="takvim-tarih"><span class="takvim-gun-kisa">{{ ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][d.weekday()] }} </span>{{ d.day }}</div>
+        {% for k in kalemler %}
+        <a class="takvim-kalem {{ 'kalem-aras' if k.odeme == 'kapida' else 'kalem-vadeli' }}" href="{{ url_for('satislar.satis_detay', satis_id=k.id) }}#odeme"
+           title="{{ k.musteri }} — {{ k.kalan|tl }}">
+          <span>{{ k.musteri }}</span><strong>{{ k.kalan|tl }}</strong>
+        </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% endfor %}
+</div>
+<p class="soluk kucuk takvim-aciklama"><span class="kalem-aras lejant"></span> Aras'tan (kapıda ödeme) <span class="kalem-vadeli lejant"></span> Vadeli / cari · Kırmızı gün: vadesi geçmiş, ödenmemiş.</p>
+{% endblock %}

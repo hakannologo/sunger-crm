@@ -25,7 +25,14 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
 - **Satışlar** (hazırlanıyor → kargoda → teslim / iade), **Müşteriler** (kart, WhatsApp, geçmiş)
 - **Talep raporu** (yönetici): kanal ve kullanıcı bazında talep, satış, dönüş oranı, olmama sebepleri
 
-Sıradaki aşama: tahsilat takibi (kapıda ödeme, havale), cari hesap, alacak takvimi, Excel'e aktarma.
+## 3. aşama
+
+- **Tahsilat:** nakit/kart/havale satışta otomatik tahsil edilir; kapıda ödemede para teslimden 3 gün sonra
+  Aras'tan beklenir ("Para geldi" ile kapanır); parçalı tahsilat girilebilir
+- **Vadeli (cari hesap):** toptan müşteriye vade günü (varsayılan 30); müşteri kartında bakiye, hesap ekstresi,
+  tahsilat (en eski borçtan başlayarak satışlara dağıtılır, fazlası hesaba yazılır)
+- **Alacaklar** sayfası ve aylık **alacak takvimi**; ana sayfada beklenen / geciken / bugünkü tutarlar
+- **Excel'e aktarma** (yönetici): satışlar, müşteriler, alacaklar
 
 ## cPanel'e kurulum — CGI yöntemi (önerilen)
 

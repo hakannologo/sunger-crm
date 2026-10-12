@@ -7,6 +7,7 @@
     <h1>Müşteriler</h1>
     <p class="soluk">{{ sayfa.toplam }} müşteri · Müşteri kaydı, bir talep satışa çevrilince kendiliğinden oluşur.</p>
   </div>
+  {% if kullanici.rol == 'admin' %}<div class="baslik-dugmeler"><a class="dugme dugme-ikincil" href="{{ url_for('tahsilat.disa_aktar', tur='musteriler') }}">Excel'e aktar</a></div>{% endif %}
 </div>
 
 <form class="kart filtre" method="get">
@@ -31,7 +32,7 @@
   {% if musteriler %}
   <div class="tablo-sarmal">
   <table class="tablo">
-    <thead><tr><th>Müşteri</th><th>Telefon</th><th class="sag gizle-mobil">Satış</th><th class="sag">Toplam</th><th class="gizle-mobil">Son satış</th></tr></thead>
+    <thead><tr><th>Müşteri</th><th>Telefon</th><th class="sag gizle-mobil">Satış</th><th class="sag">Toplam</th><th class="sag">Bakiye</th><th class="gizle-mobil">Son satış</th></tr></thead>
     <tbody>
       {% for m in musteriler %}
       <tr data-href="{{ url_for('satislar.musteri_detay', musteri_id=m.id) }}">
@@ -40,6 +41,7 @@
         <td class="nowrap">{{ m.telefon|tel }}</td>
         <td class="sag gizle-mobil">{{ m.satis_sayisi }}</td>
         <td class="sag tutar">{{ m.ciro|tl }}</td>
+        <td class="sag tutar {{ 'gecikti-yazi' if m.bakiye > 0 }}">{{ m.bakiye|tl if m.bakiye else '—' }}</td>
         <td class="gizle-mobil nowrap">{{ m.son_satis|tarih(false) if m.son_satis else '—' }}</td>
       </tr>
       {% endfor %}
