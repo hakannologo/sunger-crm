@@ -16,6 +16,8 @@ os.chdir(KOK)
 sys.path.insert(0, KOK)
 sys.path.insert(0, os.path.join(KOK, "packages"))
 os.environ.setdefault("VERI_KLASORU", VERI)
+if os.environ.get("HTTPS", "").lower() not in ("on", "1"):
+    os.environ["HTTPS_KAPALI"] = "1"
 
 try:
     from wsgiref.handlers import CGIHandler
