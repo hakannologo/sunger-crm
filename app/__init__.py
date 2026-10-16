@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from flask import Flask, g, redirect, render_template, request, session, url_for
 
-from . import db
+from . import db, sifre_sifirlama
 from .yardimci import (KANALLAR, ODEME_SEKILLERI, SATIS_DURUMLARI, TALEP_DURUMLARI, csrf_kontrol, csrf_token,
                        tarih_yaz, tel_yaz, tl_girdi, tl_yaz)
 
@@ -48,6 +48,7 @@ def create_app(ayarlar=None):
         app.config["SECRET_KEY"] = _gizli_anahtar(os.path.dirname(app.config["DATABASE"]))
 
     db.guncelle(app.config["DATABASE"])
+    sifre_sifirlama.calistir(app.config["DATABASE"])
     app.teardown_appcontext(db.kapat)
 
     app.jinja_env.filters["tl"] = tl_yaz

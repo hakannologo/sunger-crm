@@ -81,6 +81,13 @@ Veritabanı tablo değişiklikleri uygulama açılırken otomatik uygulanır; me
 **Yedek:** `veri/crm.sqlite3` dosyasını düzenli olarak indirin (cPanel *File Manager* veya
 *Backup*). Tüm müşteri ve satış verileri bu tek dosyadadır.
 
+## Şifre unutulursa
+
+cPanel → *File Manager* → `crm-veri/` klasöründe `sifre_sifirla.txt` adında bir dosya oluşturun ve içine
+yalnızca yeni şifreyi yazın (ilk yönetici hesabı için) ya da `kullaniciadi yenisifre` yazın.
+Siteyi bir kez açtığınızda şifre değişir, dosya kendiliğinden silinir ve sonuç
+`crm-veri/sifre_sifirlama_sonucu.txt` dosyasına yazılır (kullanıcı adı da orada görünür).
+
 ## Geliştirme
 
 ```bash
