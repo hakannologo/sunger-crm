@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "_makrolar.html" import csrf %}
 {% block baslik %}Alacaklar{% endblock %}
-{% macro satir(a, aras=false) %}
+{% macro satir(a, aras=false, pazar=false) %}
 <tr class="{{ 'gecikti-satir' if a.vade_tarihi and a.vade_tarihi < bugun }}">
   <td><a class="urun-adi" href="{{ url_for('satislar.satis_detay', satis_id=a.id) }}#odeme">{{ a.musteri }}</a>
-    <div class="alt-bilgi">Satış #{{ a.id }} · {{ a.olusturma|tarih(false) }}{% if a.musteri_tip == 'toptan' %} · <span class="rozet rozet-toptan">Toptan</span>{% endif %}</div></td>
+    <div class="alt-bilgi">{% if pazar and a.kanal in kanallar %}<span class="rozet rozet-kanal kanal-{{ a.kanal }}">{{ kanallar[a.kanal] }}</span> {% endif %}Satış #{{ a.id }}{% if a.siparis_no %} · Sip. {{ a.siparis_no }}{% endif %} · {{ a.olusturma|tarih(false) }}{% if a.musteri_tip == 'toptan' %} · <span class="rozet rozet-toptan">Toptan</span>{% endif %}</div></td>
   <td class="nowrap {{ 'gecikti-yazi' if a.vade_tarihi and a.vade_tarihi < bugun }}">
     {{ a.vade_tarihi|tarih(false) if a.vade_tarihi else '—' }}
     {% if a.vade_tarihi and a.vade_tarihi < bugun %}<div class="alt-bilgi gecikti-yazi">gecikti</div>{% elif a.vade_tarihi == bugun %}<div class="alt-bilgi">bugün</div>{% endif %}
@@ -12,9 +12,9 @@
   <td class="sag tutar gizle-mobil">{{ a.toplam_kurus|tl }}</td>
   <td class="sag tutar"><strong>{{ a.kalan|tl }}</strong></td>
   <td class="sag">
-    {% if aras %}
+    {% if aras or pazar %}
     <form method="post" action="{{ url_for('tahsilat.satis_tahsilat', satis_id=a.id) }}" class="satir-ici-form">
-      {{ csrf() }}<input type="hidden" name="yontem" value="kapida"><input type="hidden" name="sonra" value="{{ url_for('tahsilat.alacaklar') }}">
+      {{ csrf() }}<input type="hidden" name="yontem" value="{{ 'pazaryeri' if pazar else 'kapida' }}"><input type="hidden" name="sonra" value="{{ url_for('tahsilat.alacaklar') }}">
       <button type="submit" class="dugme dugme-kucuk">Para geldi</button>
     </form>
     {% else %}
@@ -27,7 +27,7 @@
 <div class="sayfa-baslik">
   <div>
     <h1>Alacaklar</h1>
-    <p class="soluk">Toplam beklenen: <strong>{{ (ozet.aras + ozet.vadeli)|tl }}</strong>{% if ozet.geciken %} · <span class="gecikti-yazi">{{ ozet.geciken|tl }} gecikmiş</span>{% endif %}</p>
+    <p class="soluk">Toplam beklenen: <strong>{{ (ozet.aras + ozet.vadeli + ozet.pazaryeri)|tl }}</strong>{% if ozet.geciken %} · <span class="gecikti-yazi">{{ ozet.geciken|tl }} gecikmiş</span>{% endif %}</p>
   </div>
   <div class="baslik-dugmeler">
     <a class="dugme dugme-ikincil" href="{{ url_for('tahsilat.takvim') }}">Takvim</a>
@@ -37,6 +37,7 @@
 
 <div class="sayaclar">
   <div class="sayac"><span class="sayac-deger">{{ ozet.aras|tl }}</span><span class="sayac-etiket">Aras'tan beklenen ({{ ozet.aras_adet }} sipariş)</span></div>
+  <div class="sayac"><span class="sayac-deger">{{ ozet.pazaryeri|tl }}</span><span class="sayac-etiket">Pazaryerinden beklenen ({{ ozet.pazaryeri_adet }})</span></div>
   <div class="sayac"><span class="sayac-deger">{{ ozet.vadeli|tl }}</span><span class="sayac-etiket">Vadeli / cari alacak</span></div>
   <div class="sayac {{ 'sayac-kirmizi' if ozet.geciken }}"><span class="sayac-deger">{{ ozet.geciken|tl }}</span><span class="sayac-etiket">Vadesi geçen ({{ ozet.geciken_adet }})</span></div>
   <div class="sayac"><span class="sayac-deger">{{ ozet.yolda|tl }}</span><span class="sayac-etiket">Yolda, kapıda tahsil edilecek ({{ ozet.yolda_adet }})</span></div>
@@ -51,6 +52,17 @@
     <tbody>{% for a in aras %}{{ satir(a, true) }}{% endfor %}</tbody>
   </table></div>
   {% else %}<div class="kart-ic"><p class="soluk">Bekleyen kapıda ödeme yok.</p></div>{% endif %}
+</div>
+
+<div class="kart tablo-kart">
+  <div class="kart-ic"><h2>Pazaryerinden beklenen (Trendyol, Hepsiburada, N11)</h2>
+    <p class="soluk kucuk">Ödeme günü belli olmadığı için tarih isteğe bağlıdır (satış sayfasından girilir). Para hesaba geçince “Para geldi”ye basın.</p></div>
+  {% if pazaryeri %}
+  <div class="tablo-sarmal"><table class="tablo">
+    <thead><tr><th>Müşteri</th><th>Beklenen</th><th class="sag gizle-mobil">Tutar</th><th class="sag">Kalan</th><th></th></tr></thead>
+    <tbody>{% for a in pazaryeri %}{{ satir(a, pazar=true) }}{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="kart-ic"><p class="soluk">Pazaryerinden bekleyen ödeme yok.</p></div>{% endif %}
 </div>
 
 <div class="kart tablo-kart">

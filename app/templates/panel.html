@@ -66,6 +66,12 @@
     <span class="sayac-deger">{{ alacak.aras|tl }}</span>
     <span class="sayac-etiket">Aras'tan beklenen ({{ alacak.aras_adet }})</span>
   </a>
+  {% if alacak.pazaryeri %}
+  <a class="sayac" href="{{ url_for('tahsilat.alacaklar') }}">
+    <span class="sayac-deger">{{ alacak.pazaryeri|tl }}</span>
+    <span class="sayac-etiket">Pazaryerinden beklenen ({{ alacak.pazaryeri_adet }})</span>
+  </a>
+  {% endif %}
   <a class="sayac {{ 'sayac-kirmizi' if alacak.geciken }}" href="{{ url_for('tahsilat.alacaklar') }}">
     <span class="sayac-deger">{{ alacak.geciken|tl }}</span>
     <span class="sayac-etiket">Vadesi geçen alacak ({{ alacak.geciken_adet }})</span>

@@ -30,7 +30,7 @@
       <div class="takvim-gun {{ 'baska-ay' if d.month != ay }} {{ 'bugun' if iso == bugun }} {{ 'dolu' if kalemler }} {{ 'gecmis' if iso < bugun and kalemler }}">
         <div class="takvim-tarih"><span class="takvim-gun-kisa">{{ ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][d.weekday()] }} </span>{{ d.day }}</div>
         {% for k in kalemler %}
-        <a class="takvim-kalem {{ 'kalem-aras' if k.odeme == 'kapida' else 'kalem-vadeli' }}" href="{{ url_for('satislar.satis_detay', satis_id=k.id) }}#odeme"
+        <a class="takvim-kalem {{ 'kalem-aras' if k.odeme == 'kapida' else ('kalem-pazaryeri' if k.odeme == 'pazaryeri' else 'kalem-vadeli') }}" href="{{ url_for('satislar.satis_detay', satis_id=k.id) }}#odeme"
            title="{{ k.musteri }} — {{ k.kalan|tl }}">
           <span>{{ k.musteri }}</span><strong>{{ k.kalan|tl }}</strong>
         </a>
@@ -39,5 +39,5 @@
     {% endfor %}
   {% endfor %}
 </div>
-<p class="soluk kucuk takvim-aciklama"><span class="kalem-aras lejant"></span> Aras'tan (kapıda ödeme) <span class="kalem-vadeli lejant"></span> Vadeli / cari · Kırmızı gün: vadesi geçmiş, ödenmemiş.</p>
+<p class="soluk kucuk takvim-aciklama"><span class="kalem-aras lejant"></span> Aras'tan (kapıda ödeme) <span class="kalem-pazaryeri lejant"></span> Pazaryeri <span class="kalem-vadeli lejant"></span> Vadeli / cari · Kırmızı gün: vadesi geçmiş, ödenmemiş.</p>
 {% endblock %}

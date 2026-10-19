@@ -7,7 +7,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, flash, g, redirect, render_template, request, url_for
 
 from .db import baglanti, sorgu
-from .yardimci import (KAPIDA_BEKLEME_GUN, ODEME_SEKILLERI, PESIN_ODEMELER, SATIS_DURUMLARI,
+from .yardimci import (KANALLAR, KAPIDA_BEKLEME_GUN, ODEME_SEKILLERI, PESIN_ODEMELER, SATIS_DURUMLARI,
                        TAHSILAT_YONTEMLERI, VARSAYILAN_VADE_GUN, admin_gerekli, bugun, giris_gerekli, gun_ekle,
                        islem_kaydet, simdi, tarih_oku, tel_yaz, tl_oku, tl_yaz)
 
@@ -82,7 +82,9 @@ def ozet():
         """SELECT
              COALESCE(SUM(CASE WHEN s.odeme = 'kapida' THEN s.toplam_kurus - o.odenen END), 0) AS aras,
              COALESCE(SUM(CASE WHEN s.odeme = 'kapida' THEN 1 END), 0) AS aras_adet,
-             COALESCE(SUM(CASE WHEN s.odeme != 'kapida' THEN s.toplam_kurus - o.odenen END), 0) AS vadeli,
+             COALESCE(SUM(CASE WHEN s.odeme NOT IN ('kapida', 'pazaryeri') THEN s.toplam_kurus - o.odenen END), 0) AS vadeli,
+             COALESCE(SUM(CASE WHEN s.odeme = 'pazaryeri' THEN s.toplam_kurus - o.odenen END), 0) AS pazaryeri,
+             COALESCE(SUM(CASE WHEN s.odeme = 'pazaryeri' THEN 1 END), 0) AS pazaryeri_adet,
              COALESCE(SUM(CASE WHEN s.vade_tarihi < ? THEN s.toplam_kurus - o.odenen END), 0) AS geciken,
              COALESCE(SUM(CASE WHEN s.vade_tarihi < ? THEN 1 END), 0) AS geciken_adet,
              COALESCE(SUM(CASE WHEN s.vade_tarihi = ? THEN s.toplam_kurus - o.odenen END), 0) AS bugun,
@@ -156,7 +158,7 @@ def satis_tahsilat(satis_id):
         tutar = tl_oku(request.form.get("tutar")) if request.form.get("tutar") else k
     except ValueError:
         tutar = None
-    yontem = request.form.get("yontem", "kapida" if s["odeme"] == "kapida" else "nakit")
+    yontem = request.form.get("yontem", s["odeme"] if s["odeme"] in ("kapida", "pazaryeri") else "nakit")
     if yontem not in TAHSILAT_YONTEMLERI:
         yontem = "diger"
     tarih = tarih_oku(request.form.get("tarih")) or bugun()
@@ -238,16 +240,24 @@ def musteri_tahsilat(musteri_id):
 @bp.route("/alacaklar/")
 @giris_gerekli
 def alacaklar():
-    hepsi = acik_alacaklar()
+    hepsi = sorgu(
+        """SELECT s.*, m.ad AS musteri, m.telefon, m.tip AS musteri_tip, o.odenen, s.toplam_kurus - o.odenen AS kalan,
+                  t.kanal
+           FROM satislar s JOIN satis_odeme o ON o.satis_id = s.id JOIN musteriler m ON m.id = s.musteri_id
+           LEFT JOIN talepler t ON t.id = s.talep_id
+           WHERE s.durum != 'iade' AND s.toplam_kurus - o.odenen > 0 AND (s.odeme != 'kapida' OR s.durum = 'teslim')
+           ORDER BY COALESCE(s.vade_tarihi, '9999'), s.id""")
     aras = [a for a in hepsi if a["odeme"] == "kapida"]
-    vadeli = [a for a in hepsi if a["odeme"] != "kapida"]
+    pazaryeri = [a for a in hepsi if a["odeme"] == "pazaryeri"]
+    vadeli = [a for a in hepsi if a["odeme"] not in ("kapida", "pazaryeri")]
     yolda = sorgu(
         """SELECT s.*, m.ad AS musteri, s.toplam_kurus - o.odenen AS kalan
            FROM satislar s JOIN satis_odeme o ON o.satis_id = s.id JOIN musteriler m ON m.id = s.musteri_id
            WHERE s.odeme = 'kapida' AND s.durum IN ('hazirlaniyor', 'kargoda') AND s.toplam_kurus - o.odenen > 0
            ORDER BY s.id"""
     )
-    return render_template("tahsilat/alacaklar.html", aras=aras, vadeli=vadeli, yolda=yolda, ozet=ozet(),
+    return render_template("tahsilat/alacaklar.html", aras=aras, vadeli=vadeli, pazaryeri=pazaryeri, yolda=yolda,
+                           ozet=ozet(), kanallar=KANALLAR,
                            bugun=bugun(), yontemler=TAHSILAT_YONTEMLERI, odemeler=ODEME_SEKILLERI,
                            durumlar=SATIS_DURUMLARI)
 
@@ -312,11 +322,12 @@ def disa_aktar(tur):
         )
         return _csv(f"satislar-{b}.csv",
                     ["No", "Tarih", "Müşteri", "Telefon", "Ürünler", "Tutar", "Ödenen", "Kalan", "Ödeme", "Durum",
-                     "Takip no", "Şehir", "Adres", "Kullanıcı"],
+                     "Kargo", "Takip no", "Sipariş no", "Şehir", "Adres", "Kullanıcı"],
                     [[s["id"], s["olusturma"][:10], s["musteri"], tel_yaz(s["telefon"]), s["urunler"] or "",
                       _tl(s["toplam_kurus"]), _tl(s["odenen"]),
                       _tl(0 if s["durum"] == "iade" else max(0, s["toplam_kurus"] - s["odenen"])),
-                      ODEME_SEKILLERI[s["odeme"]], SATIS_DURUMLARI[s["durum"]], s["takip_no"] or "",
+                      ODEME_SEKILLERI.get(s["odeme"], s["odeme"]), SATIS_DURUMLARI[s["durum"]], s["kargo_firma"] or "",
+                      s["takip_no"] or "", s["siparis_no"] or "",
                       s["sehir"] or "", s["adres"] or "", s["kullanici"] or ""] for s in satirlar])
     if tur == "musteriler":
         satirlar = sorgu("SELECT * FROM musteriler ORDER BY ad")
@@ -332,7 +343,7 @@ def disa_aktar(tur):
                     ["Satış no", "Müşteri", "Telefon", "Tür", "Satış tarihi", "Beklenen tarih", "Tutar", "Ödenen",
                      "Kalan", "Durum"],
                     [[a["id"], a["musteri"], tel_yaz(a["telefon"]),
-                      "Aras (kapıda)" if a["odeme"] == "kapida" else ODEME_SEKILLERI[a["odeme"]],
+                      "Aras (kapıda)" if a["odeme"] == "kapida" else ODEME_SEKILLERI.get(a["odeme"], a["odeme"]),
                       a["olusturma"][:10], a["vade_tarihi"] or "", _tl(a["toplam_kurus"]), _tl(a["odenen"]),
                       _tl(a["kalan"]), "Gecikti" if a["vade_tarihi"] and a["vade_tarihi"] < b else ""]
                      for a in satirlar])

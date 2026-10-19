@@ -5,7 +5,7 @@
 {% if t %}<a class="geri" href="{{ url_for('talepler.detay', talep_id=t.id) }}">‹ Talep #{{ t.id }}</a>{% endif %}
 <div class="sayfa-baslik"><h1>{{ 'Talebi düzenle' if t else 'Yeni talep' }}</h1></div>
 
-<form method="post" class="talep-form" id="talep-form" data-urun-api="{{ url_for('talepler.api_urunler') }}"
+<form method="post" class="talep-form" id="talep-form" data-pazaryerleri="trendyol hepsiburada n11" data-urun-api="{{ url_for('talepler.api_urunler') }}"
       data-kisi-api="{{ url_for('talepler.api_kisi') }}" data-talep-id="{{ t.id if t else '' }}">
   {{ csrf() }}
 
@@ -26,7 +26,7 @@
     <h2>2. Kim?</h2>
     <div class="satir-alanlar">
       <div class="alan{{ ' hatali' if hatalar.telefon }}">
-        <label for="a-telefon">Telefon</label>
+        <label for="a-telefon">Telefon <span class="soluk kucuk" data-pazaryeri-alan {{ 'hidden' if v.kanal not in ('trendyol', 'hepsiburada', 'n11') }}>(boş bırakılabilir)</span></label>
         <input id="a-telefon" name="telefon" value="{{ v.telefon_ham }}" inputmode="tel" placeholder="0532 123 45 67" autocomplete="off" autofocus>
         {% if hatalar.telefon %}<div class="alan-hata">{{ hatalar.telefon }}</div>{% endif %}
       </div>
@@ -38,6 +38,13 @@
       <div class="alan">
         <label for="a-sosyal">Instagram / Facebook adı</label>
         <input id="a-sosyal" name="sosyal" value="{{ v.sosyal or '' }}" placeholder="@kullaniciadi" autocomplete="off" autocapitalize="none">
+      </div>
+    </div>
+    <div class="satir-alanlar" data-pazaryeri-alan {{ 'hidden' if v.kanal not in ('trendyol', 'hepsiburada', 'n11') }}>
+      <div class="alan">
+        <label for="a-siparis_no">Sipariş no</label>
+        <input id="a-siparis_no" name="siparis_no" value="{{ v.siparis_no or '' }}" autocomplete="off">
+        <div class="alan-ipucu">Pazaryeri siparişlerinde telefon gerekmez; boş bırakın. Her sipariş ayrı müşteri olarak kaydedilir.</div>
       </div>
     </div>
     <div class="kisi-gecmis" id="kisi-gecmis" hidden></div>
@@ -118,6 +125,8 @@
 
   <div class="kart">
     <h2>4. Sonuç ve hatırlatma</h2>
+    <p class="bilgi-kart kucuk-not" data-pazaryeri-alan {{ 'hidden' if v.kanal not in ('trendyol', 'hepsiburada', 'n11') }}>
+      Pazaryeri siparişi: kaydedince doğrudan satış ekranı açılır (kargo ve ödeme), hatırlatma kurulmaz.</p>
     <div class="satir-alanlar">
       <div class="alan">
         <label for="a-durum">Durum</label>

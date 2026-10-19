@@ -331,10 +331,137 @@ def _goc_3_tahsilat(db):
     )
 
 
+def _goc_4_pazaryeri(db):
+    """Trendyol/Hepsiburada/N11 kanalları, 'pazaryeri' ödemesi, sipariş no; sahte numaraların ayrılması.
+
+    kanal ve odeme sütunlarındaki CHECK kısıtları kaldırılır (değerler programda denetlenir), böylece
+    ileride yeni kanal/ödeme eklemek için tablo yeniden kurulmaz.
+    """
+    db.execute("DROP VIEW IF EXISTS satis_odeme")
+    db.execute("""
+        CREATE TABLE talepler_yeni (
+            id INTEGER PRIMARY KEY,
+            kanal TEXT NOT NULL,
+            ad TEXT,
+            telefon TEXT,
+            sosyal TEXT,
+            siparis_no TEXT,              -- pazaryeri sipariş numarası
+            marka_id INTEGER REFERENCES markalar (id),
+            model_id INTEGER REFERENCES modeller (id),
+            arac_notu TEXT,
+            fiyat_tipi TEXT NOT NULL DEFAULT 'perakende' CHECK (fiyat_tipi IN ('perakende', 'toptan')),
+            durum TEXT NOT NULL DEFAULT 'fiyat_verildi'
+                CHECK (durum IN ('fiyat_verildi', 'dusunuyor', 'satis', 'olmadi')),
+            kayip_sebebi TEXT,
+            hatirlatma TEXT,
+            notlar TEXT,
+            toplam_kurus INTEGER NOT NULL DEFAULT 0,
+            kullanici_id INTEGER NOT NULL REFERENCES kullanicilar (id),
+            musteri_id INTEGER REFERENCES musteriler (id),
+            satis_id INTEGER,
+            olusturma TEXT NOT NULL,
+            guncelleme TEXT NOT NULL
+        )""")
+    db.execute("""
+        INSERT INTO talepler_yeni (id, kanal, ad, telefon, sosyal, marka_id, model_id, arac_notu, fiyat_tipi, durum,
+                                   kayip_sebebi, hatirlatma, notlar, toplam_kurus, kullanici_id, musteri_id, satis_id,
+                                   olusturma, guncelleme)
+            SELECT id, kanal, ad, telefon, sosyal, marka_id, model_id, arac_notu, fiyat_tipi, durum,
+                   kayip_sebebi, hatirlatma, notlar, toplam_kurus, kullanici_id, musteri_id, satis_id,
+                   olusturma, guncelleme FROM talepler""")
+    db.execute("DROP TABLE talepler")
+    db.execute("ALTER TABLE talepler_yeni RENAME TO talepler")
+    db.execute("CREATE INDEX ix_talep_hatirlatma ON talepler (kullanici_id, hatirlatma)")
+    db.execute("CREATE INDEX ix_talep_telefon ON talepler (telefon)")
+    db.execute("CREATE INDEX ix_talep_olusturma ON talepler (olusturma)")
+
+    db.execute("""
+        CREATE TABLE satislar_yeni (
+            id INTEGER PRIMARY KEY,
+            talep_id INTEGER REFERENCES talepler (id),
+            musteri_id INTEGER NOT NULL REFERENCES musteriler (id),
+            kullanici_id INTEGER NOT NULL REFERENCES kullanicilar (id),
+            durum TEXT NOT NULL DEFAULT 'hazirlaniyor'
+                CHECK (durum IN ('hazirlaniyor', 'kargoda', 'teslim', 'iade')),
+            odeme TEXT NOT NULL,
+            fiyat_tipi TEXT NOT NULL DEFAULT 'perakende',
+            adres TEXT,
+            sehir TEXT,
+            kargo_firma TEXT NOT NULL DEFAULT 'Aras Kargo',
+            takip_no TEXT,
+            siparis_no TEXT,
+            toplam_kurus INTEGER NOT NULL DEFAULT 0,
+            notlar TEXT,
+            teslim_tarihi TEXT,
+            vade_tarihi TEXT,
+            olusturma TEXT NOT NULL,
+            guncelleme TEXT NOT NULL
+        )""")
+    db.execute("""
+        INSERT INTO satislar_yeni (id, talep_id, musteri_id, kullanici_id, durum, odeme, fiyat_tipi, adres, sehir,
+                                   kargo_firma, takip_no, toplam_kurus, notlar, teslim_tarihi, vade_tarihi,
+                                   olusturma, guncelleme)
+            SELECT id, talep_id, musteri_id, kullanici_id, durum, odeme, fiyat_tipi, adres, sehir,
+                   kargo_firma, takip_no, toplam_kurus, notlar, teslim_tarihi, vade_tarihi,
+                   olusturma, guncelleme FROM satislar""")
+    db.execute("DROP TABLE satislar")
+    db.execute("ALTER TABLE satislar_yeni RENAME TO satislar")
+    db.execute("CREATE INDEX ix_satis_musteri ON satislar (musteri_id)")
+    db.execute("CREATE INDEX ix_satis_olusturma ON satislar (olusturma)")
+    db.execute("CREATE INDEX ix_satis_vade ON satislar (vade_tarihi)")
+    db.execute("""
+        CREATE VIEW satis_odeme AS
+            SELECT s.id AS satis_id,
+                   COALESCE((SELECT SUM(t.tutar_kurus) FROM tahsilatlar t WHERE t.satis_id = s.id), 0) AS odenen
+            FROM satislar s""")
+    _sahte_numaralari_ayir(db)
+
+
+def _sahte(tel):
+    return bool(tel) and len(set(tel)) == 1
+
+
+def _sahte_numaralari_ayir(db):
+    """00000000000 gibi numarayla girilip tek müşteride birleşmiş kayıtları ayırır.
+
+    Her satış kendi müşteri kaydına taşınır (ad talepten, adres satıştan), tahsilatlar satışıyla gider,
+    sahte numara silinir. Satış, tutar ve tahsilatlar değişmez.
+    """
+    zaman = simdi()
+    db.execute("UPDATE talepler SET telefon = NULL WHERE telefon IS NOT NULL AND length(replace(telefon, substr(telefon, 1, 1), '')) = 0")
+    kolon = [c[1] for c in db.execute("PRAGMA table_info(musteriler)")]
+    musteriler = [dict(zip(kolon, r)) for r in db.execute("SELECT * FROM musteriler WHERE telefon IS NOT NULL")]
+    for m in musteriler:
+        m_id = m["id"]
+        if not _sahte(m["telefon"]):
+            continue
+        satislar = db.execute(
+            """SELECT s.id, s.adres, s.sehir, s.olusturma, t.ad AS talep_ad, t.sosyal FROM satislar s
+               LEFT JOIN talepler t ON t.id = s.talep_id WHERE s.musteri_id = ? ORDER BY s.id""", (m_id,)).fetchall()
+        for satis_id, adres, sehir, olusturma, talep_ad, sosyal in satislar:
+            yeni_id = db.execute(
+                """INSERT INTO musteriler (ad, telefon, sosyal, tip, firma_adi, sehir, adres, notlar, olusturan_id,
+                       olusturma, guncelleme, vade_gun) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (talep_ad or m["ad"], sosyal, m["tip"], m["firma_adi"], sehir, adres,
+                 "Sahte telefon numarası nedeniyle başka kayıtla birleşmişti; otomatik ayrıldı. Adı kontrol edin.",
+                 m["olusturan_id"], olusturma, zaman, m["vade_gun"]),
+            ).lastrowid
+            db.execute("UPDATE satislar SET musteri_id = ? WHERE id = ?", (yeni_id, satis_id))
+            db.execute("UPDATE tahsilatlar SET musteri_id = ? WHERE satis_id = ?", (yeni_id, satis_id))
+            db.execute("UPDATE talepler SET musteri_id = ? WHERE satis_id = ?", (yeni_id, satis_id))
+        db.execute("UPDATE talepler SET musteri_id = NULL WHERE musteri_id = ?", (m_id,))
+        kalan_tahsilat = db.execute("SELECT COUNT(*) FROM tahsilatlar WHERE musteri_id = ?", (m_id,)).fetchone()[0]
+        if kalan_tahsilat:
+            db.execute("UPDATE musteriler SET telefon = NULL, guncelleme = ? WHERE id = ?", (zaman, m_id))
+        else:
+            db.execute("DELETE FROM musteriler WHERE id = ?", (m_id,))
+
+
 GOCLER = [
     _goc_1_temel_tablolar,
     _goc_2_talep_satis_musteri,
     _goc_3_tahsilat,
+    _goc_4_pazaryeri,
 ]
 
 

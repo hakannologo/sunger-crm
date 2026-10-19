@@ -14,10 +14,12 @@
   <form method="post" class="kart">
     {{ csrf() }}
     <h2>Müşteri ve teslimat</h2>
+    {% if pazaryeri %}<p class="bilgi-kart kucuk-not"><strong>{{ kanallar[t.kanal] }} siparişi.</strong> Telefon ve adres zorunlu değil; bu sipariş ayrı bir müşteri kaydı olarak açılır.</p>{% endif %}
     {% if mevcut %}<p class="bilgi-kart kucuk-not">Bu telefon numarası kayıtlı müşteriye ait: <strong>{{ mevcut.ad }}</strong>. Bilgileri güncellenecek.</p>{% endif %}
     <div class="satir-alanlar">
       {{ alan('ad', 'Ad soyad', v.ad, hatalar=hatalar, zorunlu=true) }}
-      {{ alan('telefon', 'Telefon', v.telefon|tel if v.telefon and v.telefon.isdigit() else v.telefon, hatalar=hatalar, zorunlu=true, ozellikler='inputmode="tel"') }}
+      {{ alan('telefon', 'Telefon', v.telefon|tel if v.telefon and v.telefon.isdigit() else v.telefon, hatalar=hatalar, zorunlu=not pazaryeri, ozellikler='inputmode="tel"') }}
+      {% if pazaryeri %}{{ alan('siparis_no', 'Sipariş no', v.siparis_no, hatalar=hatalar) }}{% endif %}
     </div>
     <div class="satir-alanlar">
       <div class="alan">
@@ -31,8 +33,8 @@
     </div>
     {{ alan('sehir', 'İl / ilçe', v.sehir, hatalar=hatalar) }}
     <div class="alan{{ ' hatali' if hatalar.adres }}">
-      <label for="a-adres">Teslimat adresi <span class="zorunlu">*</span></label>
-      <textarea id="a-adres" name="adres" rows="3" required>{{ v.adres }}</textarea>
+      <label for="a-adres">Teslimat adresi{% if not pazaryeri %} <span class="zorunlu">*</span>{% endif %}</label>
+      <textarea id="a-adres" name="adres" rows="3" {{ 'required' if not pazaryeri }}>{{ v.adres }}</textarea>
       {% if hatalar.adres %}<div class="alan-hata">{{ hatalar.adres }}</div>{% endif %}
     </div>
 
@@ -44,8 +46,16 @@
     </div>
     {% if hatalar.odeme %}<div class="alan-hata">{{ hatalar.odeme }}</div>{% endif %}
     <p class="soluk kucuk">Nakit, kart ve havale satışta tahsil edilmiş sayılır. Kapıda ödemede para teslimden 3 gün sonra Aras'tan beklenir.
-      Vadeli satış müşterinin cari hesabına borç yazılır. Kargo: Aras Kargo, karşı ödemeli.</p>
-    {{ alan('takip_no', 'Aras takip numarası', v.takip_no, hatalar=hatalar, ipucu='Kargoya verince de girebilirsiniz; girilince durum "Kargoda" olur.') }}
+      Vadeli satış müşterinin cari hesabına borç yazılır. Pazaryeri: para Trendyol / Hepsiburada / N11'den beklenir, gelince “Para geldi” denir.</p>
+    <div class="satir-alanlar">
+      <div class="alan">
+        <label for="a-kargo_firma">Kargo firması</label>
+        <select id="a-kargo_firma" name="kargo_firma">
+          {% for k in kargolar %}<option {{ 'selected' if v.kargo_firma == k }}>{{ k }}</option>{% endfor %}
+        </select>
+      </div>
+      {{ alan('takip_no', 'Takip numarası', v.takip_no, hatalar=hatalar, ipucu='Kargoya verince de girebilirsiniz; girilince durum "Kargoda" olur.') }}
+    </div>
     {{ alan('notlar', 'Not', v.notlar, hatalar=hatalar) }}
     <div class="form-alt">
       <button type="submit" class="dugme dugme-buyuk">Satışı oluştur</button>

@@ -272,6 +272,7 @@ select:disabled, input:disabled { background: #f3f1ed; color: var(--soluk); }
 /* ---------- 2. aşama: talepler, satışlar, müşteriler ---------- */
 :root {
   --k-telefon: #2f6fb3; --k-whatsapp: #1f9d55; --k-instagram: #c13584; --k-facebook: #3b5998; --k-diger: #6b6f76;
+  --k-trendyol: #e8590c; --k-hepsiburada: #d9480f; --k-n11: #6f42c1;
   --kirmizi: #c2372b; --kirmizi-acik: #fbeae7;
 }
 textarea { font: inherit; color: var(--yazi); background: #fff; border: 1px solid var(--cizgi-koyu); border-radius: 8px; padding: .5rem .7rem; width: 100%; resize: vertical; }
@@ -295,6 +296,9 @@ textarea { font: inherit; color: var(--yazi); background: #fff; border: 1px soli
 .secenek.kanal-whatsapp input:checked + span { background: var(--k-whatsapp); border-color: var(--k-whatsapp); }
 .secenek.kanal-instagram input:checked + span { background: var(--k-instagram); border-color: var(--k-instagram); }
 .secenek.kanal-facebook input:checked + span { background: var(--k-facebook); border-color: var(--k-facebook); }
+.secenek.kanal-trendyol input:checked + span { background: var(--k-trendyol); border-color: var(--k-trendyol); }
+.secenek.kanal-hepsiburada input:checked + span { background: var(--k-hepsiburada); border-color: var(--k-hepsiburada); }
+.secenek.kanal-n11 input:checked + span { background: var(--k-n11); border-color: var(--k-n11); }
 .secenek-grubu.hatali span { border-color: var(--tehlike); }
 
 /* Rozetler */
@@ -302,6 +306,10 @@ textarea { font: inherit; color: var(--yazi); background: #fff; border: 1px soli
 .rozet-kanal.kanal-telefon { background: var(--k-telefon); } .rozet-kanal.kanal-whatsapp { background: var(--k-whatsapp); }
 .rozet-kanal.kanal-instagram { background: var(--k-instagram); } .rozet-kanal.kanal-facebook { background: var(--k-facebook); }
 .rozet-kanal.kanal-diger { background: var(--k-diger); }
+.rozet-kanal.kanal-trendyol { background: var(--k-trendyol); } .rozet-kanal.kanal-hepsiburada { background: var(--k-hepsiburada); }
+.rozet-kanal.kanal-n11 { background: var(--k-n11); }
+.kanal-nokta.kanal-trendyol { background: var(--k-trendyol); } .kanal-nokta.kanal-hepsiburada { background: var(--k-hepsiburada); }
+.kanal-nokta.kanal-n11 { background: var(--k-n11); }
 .kanal-nokta { display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; margin-right: .35rem; vertical-align: 1px; background: var(--k-diger); }
 .kanal-nokta.kanal-telefon { background: var(--k-telefon); } .kanal-nokta.kanal-whatsapp { background: var(--k-whatsapp); }
 .kanal-nokta.kanal-instagram { background: var(--k-instagram); } .kanal-nokta.kanal-facebook { background: var(--k-facebook); }
@@ -393,6 +401,7 @@ textarea { font: inherit; color: var(--yazi); background: #fff; border: 1px soli
 .takvim-kalem:hover { text-decoration: none; filter: brightness(.95); }
 .kalem-aras { background: #e8eef8; }
 .kalem-vadeli { background: #efe7fb; }
+.kalem-pazaryeri { background: #fdebdc; }
 .lejant { display: inline-block; width: .8rem; height: .8rem; border-radius: 3px; vertical-align: -1px; margin: 0 .2rem 0 .6rem; }
 @media (max-width: 800px) {
   .takvim { grid-template-columns: 1fr; }

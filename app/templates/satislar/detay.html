@@ -7,7 +7,8 @@
   <div>
     <h1>Satış #{{ s.id }} — {{ s.musteri }}</h1>
     <p class="soluk"><span class="rozet satis-{{ s.durum }}">{{ durumlar[s.durum] }}</span> {{ s.olusturma|tarih }} · {{ s.kullanici }}
-      {% if s.talep_id %} · <a href="{{ url_for('talepler.detay', talep_id=s.talep_id) }}">Talep #{{ s.talep_id }}</a>{% endif %}</p>
+      {% if s.talep_id %} · <a href="{{ url_for('talepler.detay', talep_id=s.talep_id) }}">Talep #{{ s.talep_id }}</a>{% endif %}
+      {% if s.kanal in kanallar %} · <span class="rozet rozet-kanal kanal-{{ s.kanal }}">{{ kanallar[s.kanal] }}</span>{% endif %}</p>
   </div>
   <div class="baslik-dugmeler">
     {% if wa %}<a class="dugme dugme-ikincil" href="{{ wa }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}
@@ -33,10 +34,11 @@
     </div>
     <div class="kart-ic">
       <dl class="bilgi-listesi">
-        <dt>Telefon</dt><dd>{{ s.telefon|tel }}</dd>
-        <dt>Adres</dt><dd>{{ s.adres }}{% if s.sehir %}<br><span class="soluk">{{ s.sehir }}</span>{% endif %}</dd>
-        <dt>Kargo</dt><dd>{{ s.kargo_firma }} (karşı ödemeli)</dd>
-        {% if s.takip_no %}<dt>Takip no</dt><dd><a href="{{ aras }}{{ s.takip_no }}" target="_blank" rel="noopener">{{ s.takip_no }} — Aras'ta aç ↗</a></dd>{% endif %}
+        <dt>Telefon</dt><dd>{{ (s.telefon|tel) or '—' }}</dd>
+        {% if s.siparis_no %}<dt>Sipariş no</dt><dd>{{ s.siparis_no }}</dd>{% endif %}
+        <dt>Adres</dt><dd>{{ s.adres or '—' }}{% if s.sehir %}<br><span class="soluk">{{ s.sehir }}</span>{% endif %}</dd>
+        <dt>Kargo</dt><dd>{{ s.kargo_firma }}{% if s.kargo_firma == 'Aras Kargo' and s.odeme != 'pazaryeri' %} (karşı ödemeli){% endif %}</dd>
+        {% if s.takip_no %}<dt>Takip no</dt><dd>{% if s.kargo_firma == 'Aras Kargo' %}<a href="{{ aras }}{{ s.takip_no }}" target="_blank" rel="noopener">{{ s.takip_no }} — Aras'ta aç ↗</a>{% else %}{{ s.takip_no }}{% endif %}</dd>{% endif %}
       </dl>
       {% if wa_kargo %}<a class="dugme dugme-ikincil dugme-kucuk" href="{{ wa_kargo }}" target="_blank" rel="noopener">Takip numarasını WhatsApp'tan gönder</a>{% endif %}
     </div>
@@ -50,9 +52,21 @@
       <label class="secenek"><input type="radio" name="durum" value="{{ k }}" {{ 'checked' if s.durum == k }}><span>{{ ad }}</span></label>
       {% endfor %}
     </div>
+    <div class="satir-alanlar">
+      <div class="alan">
+        <label for="a-kargo">Kargo firması</label>
+        <select id="a-kargo" name="kargo_firma">
+          {% for k in kargolar %}<option {{ 'selected' if s.kargo_firma == k }}>{{ k }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="alan">
+        <label for="a-takip">Takip numarası</label>
+        <input id="a-takip" name="takip_no" value="{{ s.takip_no or '' }}" autocomplete="off">
+      </div>
+    </div>
     <div class="alan">
-      <label for="a-takip">Aras takip numarası</label>
-      <input id="a-takip" name="takip_no" value="{{ s.takip_no or '' }}" inputmode="numeric" autocomplete="off">
+      <label for="a-siparis">Sipariş no <span class="soluk kucuk">(pazaryeri)</span></label>
+      <input id="a-siparis" name="siparis_no" value="{{ s.siparis_no or '' }}" autocomplete="off">
     </div>
     <div class="alan">
       <label for="a-odeme">Ödeme şekli</label>
@@ -60,6 +74,13 @@
         {% for k, ad in odemeler.items() %}<option value="{{ k }}" {{ 'selected' if s.odeme == k }}>{{ ad }}</option>{% endfor %}
       </select>
     </div>
+    {% if s.odeme == 'pazaryeri' %}
+    <div class="alan">
+      <label for="a-beklenen">Paranın beklendiği tarih <span class="soluk kucuk">(isteğe bağlı)</span></label>
+      <input id="a-beklenen" type="date" name="beklenen_tarih" value="{{ s.vade_tarihi or '' }}">
+      <div class="alan-ipucu">Yazarsanız alacak takviminde o gün görünür.</div>
+    </div>
+    {% endif %}
     <div class="alan">
       <label for="a-not">Not</label>
       <input id="a-not" name="notlar" value="{{ s.notlar or '' }}">
@@ -76,13 +97,14 @@
     {% elif kalan == 0 %}<span class="rozet rozet-yesil">Ödendi</span>
     {% elif s.vade_tarihi and s.vade_tarihi < bugun %}<span class="rozet rozet-kirmizi">Gecikti</span>
     {% elif s.odeme == 'kapida' and s.durum != 'teslim' %}<span class="rozet satis-kargoda">Teslimde Aras tahsil edecek</span>
+    {% elif s.odeme == 'pazaryeri' %}<span class="rozet satis-hazirlaniyor">Pazaryerinden bekleniyor</span>
     {% else %}<span class="rozet satis-hazirlaniyor">Bekleniyor</span>{% endif %}
   </div>
   <div class="odeme-ozet">
     <div><span class="soluk">Tutar</span><strong>{{ s.toplam_kurus|tl }}</strong></div>
     <div><span class="soluk">Ödenen</span><strong class="yesil-yazi">{{ odenen|tl }}</strong></div>
     <div><span class="soluk">Kalan</span><strong class="{{ 'gecikti-yazi' if kalan and s.vade_tarihi and s.vade_tarihi < bugun }}">{{ kalan|tl }}</strong></div>
-    <div><span class="soluk">{{ 'Aras ödeme günü' if s.odeme == 'kapida' else 'Vade' }}</span><strong>{{ s.vade_tarihi|tarih(false) if s.vade_tarihi else '—' }}</strong></div>
+    <div><span class="soluk">{{ 'Aras ödeme günü' if s.odeme == 'kapida' else ('Beklenen tarih' if s.odeme == 'pazaryeri' else 'Vade') }}</span><strong>{{ s.vade_tarihi|tarih(false) if s.vade_tarihi else '—' }}</strong></div>
   </div>
 
   {% if tahsilatlar %}
@@ -106,6 +128,11 @@
       {{ csrf() }}<input type="hidden" name="yontem" value="kapida">
       <button type="submit" class="dugme">Aras'tan para geldi ({{ kalan|tl }})</button>
     </form>
+    {% elif s.odeme == 'pazaryeri' %}
+    <form method="post" action="{{ url_for('tahsilat.satis_tahsilat', satis_id=s.id) }}" class="satir-form">
+      {{ csrf() }}<input type="hidden" name="yontem" value="pazaryeri">
+      <button type="submit" class="dugme">{{ {'trendyol': "Trendyol'dan", 'hepsiburada': "Hepsiburada'dan", 'n11': "N11'den"}.get(s.kanal, "Pazaryerinden") }} para geldi ({{ kalan|tl }})</button>
+    </form>
     {% endif %}
     <details class="tahsilat-ac" {{ 'open' if s.odeme == 'vadeli' }}>
       <summary>Tahsilat gir</summary>
@@ -114,7 +141,7 @@
         <div class="satir-alanlar">
           <div class="alan"><label for="t-tutar">Tutar (₺)</label><input id="t-tutar" name="tutar" inputmode="decimal" placeholder="{{ kalan|tl_girdi }}"></div>
           <div class="alan"><label for="t-yontem">Yöntem</label>
-            <select id="t-yontem" name="yontem">{% for k, ad in yontemler.items() %}<option value="{{ k }}" {{ 'selected' if (s.odeme == 'kapida' and k == 'kapida') or (s.odeme != 'kapida' and k == 'nakit') }}>{{ ad }}</option>{% endfor %}</select></div>
+            <select id="t-yontem" name="yontem">{% for k, ad in yontemler.items() %}<option value="{{ k }}" {{ 'selected' if (s.odeme in ('kapida', 'pazaryeri') and k == s.odeme) or (s.odeme not in ('kapida', 'pazaryeri') and k == 'nakit') }}>{{ ad }}</option>{% endfor %}</select></div>
           <div class="alan"><label for="t-tarih">Tarih</label><input id="t-tarih" type="date" name="tarih" value="{{ bugun }}"></div>
         </div>
         <div class="alan"><label for="t-aciklama">Açıklama</label><input id="t-aciklama" name="aciklama" placeholder="ör. kapora"></div>

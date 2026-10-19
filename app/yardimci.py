@@ -14,17 +14,22 @@ PARCA_TIPLERI = ["Oturak", "Sırt", "Başlık", "Kolçak", "Baldır", "Takım", 
 
 
 KANALLAR = {"telefon": "Telefon", "whatsapp": "WhatsApp", "instagram": "Instagram",
-            "facebook": "Facebook", "diger": "Diğer"}
+            "facebook": "Facebook", "trendyol": "Trendyol", "hepsiburada": "Hepsiburada", "n11": "N11",
+            "diger": "Diğer"}
+# Pazaryeri siparişlerinde alıcının telefonu görünmez: telefon istenmez, her sipariş ayrı müşteri olur.
+PAZARYERLERI = ("trendyol", "hepsiburada", "n11")
 TALEP_DURUMLARI = {"fiyat_verildi": "Fiyat verildi", "dusunuyor": "Düşünüyor",
                    "satis": "Satışa döndü", "olmadi": "Olmadı"}
 KAYIP_SEBEPLERI = ["Pahalı buldu", "Başka yerden aldı", "Cevap vermedi", "Vazgeçti", "Diğer"]
 SATIS_DURUMLARI = {"hazirlaniyor": "Hazırlanıyor", "kargoda": "Kargoda",
                    "teslim": "Teslim edildi", "iade": "İade"}
 ODEME_SEKILLERI = {"nakit": "Nakit", "kart": "Kredi kartı", "havale": "Havale / EFT",
-                   "kapida": "Kapıda ödeme", "vadeli": "Vadeli (cari hesap)"}
+                   "kapida": "Kapıda ödeme", "vadeli": "Vadeli (cari hesap)", "pazaryeri": "Pazaryeri"}
 PESIN_ODEMELER = ("nakit", "kart", "havale")
 TAHSILAT_YONTEMLERI = {"nakit": "Nakit", "kart": "Kredi kartı", "havale": "Havale / EFT",
-                       "kapida": "Aras (kapıda ödeme)", "diger": "Diğer"}
+                       "kapida": "Aras (kapıda ödeme)", "pazaryeri": "Pazaryeri ödemesi", "diger": "Diğer"}
+KARGO_FIRMALARI = ["Aras Kargo", "Trendyol Express", "HepsiJet", "Yurtiçi Kargo", "MNG Kargo", "PTT Kargo",
+                   "Sürat Kargo", "Diğer"]
 KAPIDA_BEKLEME_GUN = 3
 VARSAYILAN_VADE_GUN = 30
 ARAS_TAKIP = "https://kargotakip.araskargo.com.tr/mainpage.aspx?code="
@@ -62,6 +67,11 @@ def tel_normal(metin):
     if rakam.startswith("0") and len(rakam) == 11:
         rakam = rakam[1:]
     return rakam or None
+
+
+def sahte_tel(tel):
+    """00000000000, 11111111111 gibi tek rakamdan oluşan (gerçek olmayan) numara mı?"""
+    return bool(tel) and len(set(tel)) == 1
 
 
 def tel_yaz(tel):

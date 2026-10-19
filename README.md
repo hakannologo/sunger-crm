@@ -34,6 +34,15 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
 - **Alacaklar** sayfası ve aylık **alacak takvimi**; ana sayfada beklenen / geciken / bugünkü tutarlar
 - **Excel'e aktarma** (yönetici): satışlar, müşteriler, alacaklar
 
+## 4. ek: pazaryeri siparişleri
+
+- Kanallar: **Trendyol, Hepsiburada, N11**. Bunlarda telefon zorunlu değil, **sipariş no** girilir; her sipariş ayrı
+  müşteri olur, eski kayıtlarla eşleştirme/otomatik doldurma yapılmaz. Kayıttan sonra doğrudan satış ekranı açılır.
+- Ödeme şekli **Pazaryeri**: alacaklarda ayrı bölüm; beklenen tarih isteğe bağlı (girilirse takvimde görünür), "Para geldi".
+- Satışta **kargo firması** seçilir (Aras, Trendyol Express, HepsiJet, Yurtiçi, MNG, PTT, Sürat, Diğer).
+- 00000000000 gibi tek rakamdan oluşan numaralar kabul edilmez; daha önce böyle girilip tek müşteride birleşmiş
+  satışlar güncellemede otomatik olarak ayrı müşterilere ayrılır.
+
 ## cPanel'e kurulum — CGI yöntemi (önerilen)
 
 Bu sunucuda Setup Python App yerine Günaydın CRM ile aynı CGI yöntemi kullanılır:

@@ -2,8 +2,8 @@
 from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template, request, url_for
 
 from .db import baglanti, sorgu, tr_kucuk
-from .yardimci import (KANALLAR, KAYIP_SEBEPLERI, TALEP_DURUMLARI, Sayfa, bugun, giris_gerekli,
-                       islem_kaydet, sayfa_no, simdi, tarih_oku, tel_normal, tl_oku, tl_yaz)
+from .yardimci import (KANALLAR, KAYIP_SEBEPLERI, PAZARYERLERI, TALEP_DURUMLARI, Sayfa, bugun, giris_gerekli,
+                       islem_kaydet, sahte_tel, sayfa_no, simdi, tarih_oku, tel_normal, tl_oku, tl_yaz)
 
 bp = Blueprint("talepler", __name__, url_prefix="/talepler")
 
@@ -38,7 +38,7 @@ def kalemler(talep_id):
 
 
 def gecmis_talepler(telefon, haric_id=None, limit=5):
-    if not telefon:
+    if not telefon or sahte_tel(telefon):
         return []
     return sorgu(
         """SELECT t.id, t.ad, t.olusturma, t.durum, t.toplam_kurus, t.kanal, m.ad AS marka, mo.ad AS model,
@@ -79,10 +79,12 @@ def liste():
     if q:
         tel = tel_normal(q)
         if tel and len(tel) >= 4:
-            kosullar.append("(t.telefon LIKE ? OR tr_kucuk(COALESCE(t.ad,'') || ' ' || COALESCE(t.sosyal,'')) LIKE ?)")
+            kosullar.append("(t.telefon LIKE ? OR tr_kucuk(COALESCE(t.ad,'') || ' ' || COALESCE(t.sosyal,'') || ' ' || "
+                            "COALESCE(t.siparis_no,'')) LIKE ?)")
             param += [f"%{tel}%", f"%{tr_kucuk(q)}%"]
         else:
-            kosullar.append("tr_kucuk(COALESCE(t.ad,'') || ' ' || COALESCE(t.sosyal,'') || ' ' || COALESCE(t.notlar,'')) LIKE ?")
+            kosullar.append("tr_kucuk(COALESCE(t.ad,'') || ' ' || COALESCE(t.sosyal,'') || ' ' || COALESCE(t.notlar,'') "
+                            "|| ' ' || COALESCE(t.siparis_no,'')) LIKE ?")
             param.append(f"%{tr_kucuk(q)}%")
     where = ("WHERE " + " AND ".join(kosullar)) if kosullar else ""
     toplam = sorgu(f"SELECT COUNT(*) AS n FROM talepler t {where}", tuple(param), tek=True)["n"]
@@ -115,6 +117,7 @@ def _form_oku():
         "ad": fm.get("ad", "").strip(),
         "telefon_ham": fm.get("telefon", "").strip(),
         "sosyal": fm.get("sosyal", "").strip().lstrip("@"),
+        "siparis_no": fm.get("siparis_no", "").strip(),
         "marka_id": fm.get("marka_id", ""),
         "model_id": fm.get("model_id", ""),
         "arac_notu": fm.get("arac_notu", "").strip(),
@@ -126,11 +129,18 @@ def _form_oku():
     hatalar = {}
     if veri["kanal"] not in KANALLAR:
         hatalar["kanal"] = "Talebin nereden geldiğini seçin."
+    pazaryeri = veri["kanal"] in PAZARYERLERI
     veri["telefon"] = tel_normal(veri["telefon_ham"])
-    if veri["telefon"] and len(veri["telefon"]) < 10:
+    if veri["telefon"] and sahte_tel(veri["telefon"]):
+        hatalar["telefon"] = ("Bu gerçek bir numara değil. Telefonu bilmiyorsanız boş bırakın; "
+                              "pazaryeri siparişiyse yukarıdan Trendyol / Hepsiburada / N11'i seçin.")
+    elif veri["telefon"] and len(veri["telefon"]) < 10:
         hatalar["telefon"] = "Telefon numarası eksik görünüyor."
-    if not (veri["ad"] or veri["telefon"] or veri["sosyal"]):
-        hatalar["ad"] = "Ad, telefon veya kullanıcı adından en az biri gerekli."
+    if not pazaryeri:
+        veri["siparis_no"] = ""
+    if not (veri["ad"] or veri["telefon"] or veri["sosyal"] or veri["siparis_no"]):
+        hatalar["ad"] = ("Alıcının adı veya sipariş no gerekli." if pazaryeri
+                         else "Ad, telefon veya kullanıcı adından en az biri gerekli.")
     if veri["fiyat_tipi"] not in ("perakende", "toptan"):
         veri["fiyat_tipi"] = "perakende"
     if veri["durum"] not in ("fiyat_verildi", "dusunuyor", "olmadi"):
@@ -141,7 +151,9 @@ def _form_oku():
                                       (veri["model_id"], veri["marka_id"]), tek=True):
         veri["model_id"] = None
 
-    if veri["durum"] in ACIK_DURUMLAR:
+    if pazaryeri and veri["durum"] in ACIK_DURUMLAR:
+        veri["hatirlatma"] = None   # sipariş zaten gelmiş; kayıttan sonra doğrudan satışa çevrilir
+    elif veri["durum"] in ACIK_DURUMLAR:
         hat = tarih_oku(veri["hatirlatma"])
         if veri["hatirlatma"] and not hat:
             hatalar["hatirlatma"] = "Geçerli bir tarih seçin."
@@ -206,24 +218,29 @@ def yeni():
             return _form_sayfasi(veri, kalem_listesi, hatalar)
         db = baglanti()
         musteri = None
-        if veri["telefon"]:
+        if veri["telefon"] and veri["kanal"] not in PAZARYERLERI:
             musteri = sorgu("SELECT id FROM musteriler WHERE telefon = ? ORDER BY id LIMIT 1",
                             (veri["telefon"],), tek=True)
         zaman = simdi()
         cur = db.execute(
-            """INSERT INTO talepler (kanal, ad, telefon, sosyal, marka_id, model_id, arac_notu, fiyat_tipi, durum,
-                   kayip_sebebi, hatirlatma, notlar, toplam_kurus, kullanici_id, musteri_id, olusturma, guncelleme)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (veri["kanal"], veri["ad"] or None, veri["telefon"], veri["sosyal"] or None, veri["marka_id"],
+            """INSERT INTO talepler (kanal, ad, telefon, sosyal, siparis_no, marka_id, model_id, arac_notu, fiyat_tipi,
+                   durum, kayip_sebebi, hatirlatma, notlar, toplam_kurus, kullanici_id, musteri_id, olusturma,
+                   guncelleme)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (veri["kanal"], veri["ad"] or None, veri["telefon"], veri["sosyal"] or None, veri["siparis_no"] or None,
+             veri["marka_id"],
              veri["model_id"], veri["arac_notu"] or None, veri["fiyat_tipi"], veri["durum"], veri["kayip_sebebi"],
              veri["hatirlatma"], veri["notlar"] or None, veri["toplam_kurus"], g.kullanici["id"],
              musteri["id"] if musteri else None, zaman, zaman),
         )
         talep_id = cur.lastrowid
         _kalemleri_yaz(db, talep_id, kalem_listesi)
-        islem_kaydet("Talep girildi", f"#{talep_id} — {veri['ad'] or veri['telefon_ham'] or veri['sosyal']} — "
+        islem_kaydet("Talep girildi", f"#{talep_id} — {veri['ad'] or veri['telefon_ham'] or veri['sosyal'] or veri['siparis_no']} — "
                                       f"{tl_yaz(veri['toplam_kurus'])}")
         db.commit()
+        if veri["kanal"] in PAZARYERLERI and veri["durum"] in ACIK_DURUMLAR:
+            flash(f"{KANALLAR[veri['kanal']]} siparişi kaydedildi. Şimdi kargo ve ödeme bilgilerini girin.", "basari")
+            return redirect(url_for("satislar.talepten_satis", talep_id=talep_id))
         mesaj = "Talep kaydedildi."
         if veri["hatirlatma"]:
             mesaj += f" Hatırlatma: {veri['hatirlatma'][8:10]}.{veri['hatirlatma'][5:7]}.{veri['hatirlatma'][:4]}"
@@ -233,7 +250,7 @@ def yeni():
         return redirect(url_for("talepler.detay", talep_id=talep_id))
 
     veri = {"kanal": request.args.get("kanal", ""), "ad": "", "telefon_ham": request.args.get("tel", ""),
-            "sosyal": "", "marka_id": None, "model_id": None, "arac_notu": "", "fiyat_tipi": "perakende",
+            "sosyal": "", "siparis_no": "", "marka_id": None, "model_id": None, "arac_notu": "", "fiyat_tipi": "perakende",
             "durum": "fiyat_verildi", "hatirlatma": bugun(1), "notlar": "", "kayip_sebebi": None}
     return _form_sayfasi(veri, [], {})
 
@@ -251,10 +268,11 @@ def duzenle(talep_id):
             return _form_sayfasi(veri, kalem_listesi, hatalar, t)
         db = baglanti()
         db.execute(
-            """UPDATE talepler SET kanal = ?, ad = ?, telefon = ?, sosyal = ?, marka_id = ?, model_id = ?,
-                   arac_notu = ?, fiyat_tipi = ?, durum = ?, kayip_sebebi = ?, hatirlatma = ?, notlar = ?,
-                   toplam_kurus = ?, guncelleme = ? WHERE id = ?""",
-            (veri["kanal"], veri["ad"] or None, veri["telefon"], veri["sosyal"] or None, veri["marka_id"],
+            """UPDATE talepler SET kanal = ?, ad = ?, telefon = ?, sosyal = ?, siparis_no = ?, marka_id = ?,
+                   model_id = ?, arac_notu = ?, fiyat_tipi = ?, durum = ?, kayip_sebebi = ?, hatirlatma = ?,
+                   notlar = ?, toplam_kurus = ?, guncelleme = ? WHERE id = ?""",
+            (veri["kanal"], veri["ad"] or None, veri["telefon"], veri["sosyal"] or None, veri["siparis_no"] or None,
+             veri["marka_id"],
              veri["model_id"], veri["arac_notu"] or None, veri["fiyat_tipi"], veri["durum"], veri["kayip_sebebi"],
              veri["hatirlatma"], veri["notlar"] or None, veri["toplam_kurus"], simdi(), talep_id),
         )
@@ -304,7 +322,8 @@ def takip(talep_id):
     hat = None
     kayip = None
     if durum in ACIK_DURUMLAR:
-        hat = tarih_oku(request.form.get("hatirlatma")) or bugun(1)
+        if t["kanal"] not in PAZARYERLERI:   # pazaryeri siparişine dönüş hatırlatması gerekmez
+            hat = tarih_oku(request.form.get("hatirlatma")) or bugun(1)
     else:
         kayip = request.form.get("kayip_sebebi", "").strip() or "Diğer"
     db = baglanti()
@@ -364,7 +383,7 @@ def ertele(talep_id):
 @giris_gerekli
 def api_kisi():
     tel = tel_normal(request.args.get("tel", ""))
-    if not tel or len(tel) < 10:
+    if not tel or len(tel) < 10 or sahte_tel(tel) or request.args.get("kanal") in PAZARYERLERI:
         return jsonify({"musteri": None, "talepler": []})
     m = sorgu("SELECT id, ad, tip, firma_adi FROM musteriler WHERE telefon = ? ORDER BY id LIMIT 1", (tel,), tek=True)
     gecmis = gecmis_talepler(tel, request.args.get("haric", type=int))

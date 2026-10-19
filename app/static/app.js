@@ -254,10 +254,26 @@
     var telKutu = document.getElementById("a-telefon");
     var gecmisKutu = document.getElementById("kisi-gecmis");
     var telZaman;
+    var pazaryerleri = (tf.getAttribute("data-pazaryerleri") || "").split(" ");
+    function seciliKanal() {
+      var k = tf.querySelector("input[name=kanal]:checked");
+      return k ? k.value : "";
+    }
+    function pazaryeriMi() { return pazaryerleri.indexOf(seciliKanal()) >= 0; }
+    function kanalaGoreGoster() {
+      var p = pazaryeriMi();
+      tf.querySelectorAll("[data-pazaryeri-alan]").forEach(function (el) { el.hidden = !p; });
+      if (p) gecmisKutu.hidden = true;
+    }
+    tf.querySelectorAll("input[name=kanal]").forEach(function (r) {
+      r.addEventListener("change", function () { kanalaGoreGoster(); kisiSorgula(); });
+    });
     function kisiSorgula() {
       var rakam = telKutu.value.replace(/\D/g, "");
-      if (rakam.length < 10) { gecmisKutu.hidden = true; return; }
-      fetch(kisiApi + "?tel=" + encodeURIComponent(telKutu.value) + (talepId ? "&haric=" + talepId : ""),
+      // Pazaryeri siparişinde ve 00000000000 gibi sahte numaralarda eski kayıt aranmaz / ad doldurulmaz
+      if (rakam.length < 10 || pazaryeriMi() || /^(\d)\1+$/.test(rakam)) { gecmisKutu.hidden = true; return; }
+      fetch(kisiApi + "?tel=" + encodeURIComponent(telKutu.value) + "&kanal=" + encodeURIComponent(seciliKanal()) +
+            (talepId ? "&haric=" + talepId : ""),
             { credentials: "same-origin" })
         .then(function (r) { return r.json(); })
         .then(function (v) {

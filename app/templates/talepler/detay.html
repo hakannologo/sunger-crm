@@ -38,6 +38,7 @@
     <dl class="bilgi-listesi">
       <dt>Telefon</dt><dd>{{ (t.telefon|tel) or '—' }}</dd>
       {% if t.sosyal %}<dt>Sosyal medya</dt><dd>@{{ t.sosyal }}</dd>{% endif %}
+      {% if t.siparis_no %}<dt>Sipariş no</dt><dd>{{ t.siparis_no }}</dd>{% endif %}
       <dt>Araç</dt><dd>{{ ' '.join([t.marka or '', t.model or ''])|trim or '—' }}{% if t.arac_notu %} <span class="soluk">({{ t.arac_notu }})</span>{% endif %}</dd>
       <dt>Fiyat tipi</dt><dd>{{ 'Toptan' if t.fiyat_tipi == 'toptan' else 'Perakende' }}</dd>
       {% if t.kayip_sebebi %}<dt>Olmama sebebi</dt><dd>{{ t.kayip_sebebi }}</dd>{% endif %}
