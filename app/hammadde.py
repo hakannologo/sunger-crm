@@ -1,7 +1,8 @@
 """Hammadde maliyeti (yalnızca yönetici): araç + ürün seçilince hammadde kilosu ve TL maliyeti.
 
-Maliyet = hammadde_kg × kilo fiyatı (€) × euro kuru. Euro kuru her gün TCMB'den (döviz satış) alınır;
-alınamazsa son bilinen kur kullanılır ve yönetici kuru elle girebilir.
+Maliyet = hammadde_kg × kilo fiyatı (€) × euro kuru. Kur iki şekilde olur:
+  - sabit (elle): yöneticinin yazdığı kur, yine değiştirilene kadar geçerli (varsayılan 60 ₺)
+  - TCMB: "Merkez Bankası kurunu al" seçilirse günde bir kez TCMB döviz satış kuru alınır.
 """
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -68,9 +69,9 @@ def euro_kuru():
     if kayitli:
         bilgi["kur"] = float(kayitli)
     bugun_ = bugun()
-    elle_bugun = bilgi["kaynak"] == "elle" and ayar("eur_kur_guncelleme", "")[:10] == bugun_
+    sabit = bilgi["kaynak"] == "elle" and bilgi["kur"]   # sabit kur: TCMB'ye hiç gidilmez
     guncel = ayar("eur_kur_guncelleme", "")[:10] == bugun_ and bilgi["kaynak"] == "tcmb"
-    if elle_bugun or guncel:
+    if sabit or guncel:
         return bilgi
     son_deneme = ayar("eur_kur_son_deneme", "")
     if son_deneme and son_deneme > (datetime.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"):
@@ -82,7 +83,7 @@ def euro_kuru():
         kur, tarih = tcmb_euro()
     except Exception as e:  # ağ, zaman aşımı, biçim hatası
         ayar_yaz(db, "eur_kur_son_deneme", simdi())
-        ayar_yaz(db, "eur_kur_hata", "Merkez Bankası kuru alınamadı. Kuru aşağıdan elle girebilirsiniz.")
+        ayar_yaz(db, "eur_kur_hata", "Merkez Bankası kuru alınamadı. Kuru aşağıdan sabit olarak girebilirsiniz.")
         db.commit()
         bilgi["hata"] = ayar("eur_kur_hata")
         return bilgi
@@ -159,7 +160,7 @@ def ayarlar():
         for k, v in (("eur_kur", f"{kur:.4f}"), ("eur_kur_tarih", datetime.now().strftime("%d.%m.%Y")),
                      ("eur_kur_kaynak", "elle"), ("eur_kur_guncelleme", simdi()), ("eur_kur_hata", "")):
             ayar_yaz(db, k, v)
-        degisen.append(f"euro kuru elle {kur:.4f} ₺")
+        degisen.append(f"sabit euro kuru {kur:.4f} ₺")
     if request.form.get("tcmb") == "1":
         # Elle girilen kuru bırakıp Merkez Bankası'ndan yeniden al
         for k in ("eur_kur_guncelleme", "eur_kur_son_deneme"):

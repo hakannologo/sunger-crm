@@ -43,17 +43,24 @@ class HammaddeTesti(unittest.TestCase):
                                 "OR ad LIKE '%Coralla%' OR ad LIKE '%Sucuto%' OR ad LIKE '%Dally%'")[0]["n"], 0)
         self.assertTrue(self.q("SELECT 1 FROM urunler WHERE ad = 'VW Polo Uyumlu Oturak Süngeri'"))
 
-    def test_maliyet_hesabi(self):
-        # Corolla oturak 1,25 kg × 2,60 € × 50 ₺ = 162,50 ₺; KDV %20 dahil 195,00 ₺
+    def test_varsayilan_sabit_kur_60(self):
+        # Corolla oturak 1,25 kg × 2,60 € × 60 ₺ = 195,00 ₺; KDV %20 dahil 234,00 ₺
         html = self.c.get("/hammadde/?q=Corolla+(2013").get_data(as_text=True)
         self.assertIn("1,25 kg", html)
-        self.assertIn("162,50", html)
         self.assertIn("195,00", html)
-        self.assertIn("50,0000 ₺", html)
-        self.assertIn("Merkez Bankası", html)
-        # Kur gün içinde bir kez alınır
+        self.assertIn("234,00", html)
+        self.assertIn("60,0000 ₺", html)
+        self.assertIn("Sabit kur", html)
+        self.assertEqual(self.tcmb_mock.call_count, 0)      # sabit kurda TCMB'ye gidilmez
+
+    def test_tcmb_kuruna_gecis(self):
+        tk = self.tok("/hammadde/")
+        self.c.post("/hammadde/ayarlar", data={"csrf_token": tk, "tcmb": "1"})
+        html = self.c.get("/hammadde/?q=Corolla+(2013").get_data(as_text=True)
+        self.assertIn("162,50", html)                       # 1,25 × 2,60 × 50
+        self.assertIn("Merkez Bankası döviz satış", html)
         self.c.get("/hammadde/")
-        self.assertEqual(self.tcmb_mock.call_count, 1)
+        self.assertEqual(self.tcmb_mock.call_count, 1)      # gün içinde bir kez alınır
 
     def test_marka_model_filtresi(self):
         with self.app.app_context():
@@ -69,17 +76,18 @@ class HammaddeTesti(unittest.TestCase):
         tk = self.tok("/hammadde/")
         self.c.post("/hammadde/ayarlar", data={"csrf_token": tk, "eur_kg": "3,00", "kdv": "20", "kur": "40"})
         html = self.c.get("/hammadde/?q=Corolla+(2013").get_data(as_text=True)
-        self.assertIn("Elle girildi", html)
+        self.assertIn("Sabit kur", html)
         self.assertIn("150,00", html)                       # 1,25 × 3 × 40
-        self.assertEqual(self.tcmb_mock.call_count, 1)      # elle girilen kur bugün geçerli
+        self.assertEqual(self.tcmb_mock.call_count, 0)
         self.c.post("/hammadde/ayarlar", data={"csrf_token": tk, "tcmb": "1"})
         self.assertIn("187,50", self.c.get("/hammadde/?q=Corolla+(2013").get_data(as_text=True))  # 1,25×3×50
 
     def test_kur_alinamazsa(self):
         self.tcmb_mock.side_effect = OSError("ağ yok")
+        self.c.post("/hammadde/ayarlar", data={"csrf_token": self.tok("/hammadde/"), "tcmb": "1"})
         html = self.c.get("/hammadde/").get_data(as_text=True)
         self.assertIn("Merkez Bankası kuru alınamadı", html)
-        self.assertIn("Kur yok", html)
+        self.assertIn("60,0000 ₺", html)                    # son bilinen kur kullanılmaya devam eder
         self.c.get("/hammadde/")
         self.assertEqual(self.tcmb_mock.call_count, 1)      # bir saat içinde tekrar denenmez
 

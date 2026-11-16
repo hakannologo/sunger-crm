@@ -47,8 +47,8 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
 
 - Menü → **Hammadde maliyeti**: marka / model / parça seçilince her ürünün hammadde kilosu ve TL maliyeti
   (KDV hariç ve dahil) görünür. Maliyet = kg × kilo fiyatı (€) × euro kuru.
-- Kilo fiyatı (varsayılan 2,60 €) ve KDV (%20) sayfadan değiştirilir. Euro kuru günde bir kez TCMB'den
-  (döviz satış) alınır; alınamazsa son kur kullanılır, kur elle de girilebilir (o gün geçerli).
+- Kilo fiyatı (varsayılan 2,60 €), KDV (%20) ve **sabit euro kuru (varsayılan 60 ₺)** sayfadan değiştirilir;
+  sabit kur değiştirilene kadar geçerlidir. İstenirse "Merkez Bankası kurunu al" ile günlük TCMB kuruna geçilir.
 - Kilolar `app/data/hammadde.csv`'den yüklendi (320 ürün); eksikler ürün düzenleme sayfasından girilir.
 
 ## cPanel'e kurulum — CGI yöntemi (önerilen)

@@ -15,7 +15,7 @@
     <div><span class="soluk">Hammadde fiyatı</span><strong>{{ ('%.2f'|format(birim.eur_kg))|replace('.', ',') }} € / kg</strong><span class="soluk kucuk">+ KDV %{{ '%g'|format(birim.kdv) }}</span></div>
     <div><span class="soluk">Euro kuru</span>
       {% if kur.kur %}<strong>{{ ('%.4f'|format(kur.kur))|replace('.', ',') }} ₺</strong>
-      <span class="soluk kucuk">{{ 'Merkez Bankası döviz satış' if kur.kaynak == 'tcmb' else 'Elle girildi' }}{% if kur.tarih %} · {{ kur.tarih }}{% endif %}</span>
+      <span class="soluk kucuk">{% if kur.kaynak == 'tcmb' %}Merkez Bankası döviz satış{% if kur.tarih %} · {{ kur.tarih }}{% endif %}{% else %}Sabit kur{% if kur.tarih %} · girildi: {{ kur.tarih }}{% endif %}{% endif %}</span>
       {% else %}<strong class="eksik">Kur yok</strong>{% endif %}
     </div>
     <div><span class="soluk">1 kg hammadde</span>
@@ -37,9 +37,9 @@
         <input id="h-kdv" name="kdv" inputmode="decimal" value="{{ '%g'|format(birim.kdv) }}">
       </div>
       <div class="alan">
-        <label for="h-kur">Euro kurunu elle gir (₺)</label>
+        <label for="h-kur">Sabit euro kuru (₺)</label>
         <input id="h-kur" name="kur" inputmode="decimal" placeholder="Ör. 44,38">
-        <div class="alan-ipucu">Elle girilen kur bugün geçerlidir; yarın yine Merkez Bankası kuru alınır.</div>
+        <div class="alan-ipucu">Yazdığınız kur siz değiştirene kadar geçerli kalır. Boş bırakırsanız kur değişmez.</div>
       </div>
       <div class="alan hm-dugmeler">
         <button type="submit" class="dugme">Kaydet</button>

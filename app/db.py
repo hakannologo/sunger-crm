@@ -479,12 +479,22 @@ def _goc_5_hammadde(db):
                    (eski, yeni_ad, zaman, eski))
 
 
+def _goc_6_sabit_kur(db):
+    """Euro kuru varsayılan olarak sabit 60 ₺ (yönetici sayfadan değiştirir)."""
+    from datetime import datetime
+    for k, v in (("eur_kur", "60.0000"), ("eur_kur_kaynak", "elle"), ("eur_kur_tarih", datetime.now().strftime("%d.%m.%Y")),
+                 ("eur_kur_guncelleme", simdi()), ("eur_kur_hata", ""), ("eur_kur_son_deneme", "")):
+        db.execute("INSERT INTO ayarlar (anahtar, deger) VALUES (?, ?) "
+                   "ON CONFLICT(anahtar) DO UPDATE SET deger = excluded.deger", (k, v))
+
+
 GOCLER = [
     _goc_1_temel_tablolar,
     _goc_2_talep_satis_musteri,
     _goc_3_tahsilat,
     _goc_4_pazaryeri,
     _goc_5_hammadde,
+    _goc_6_sabit_kur,
 ]
 
 
