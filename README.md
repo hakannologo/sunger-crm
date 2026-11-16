@@ -51,6 +51,13 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
   sabit kur değiştirilene kadar geçerlidir. İstenirse "Merkez Bankası kurunu al" ile günlük TCMB kuruna geçilir.
 - Kilolar `app/data/hammadde.csv`'den yüklendi (320 ürün); eksikler ürün düzenleme sayfasından girilir.
 
+## Telefona uygulama olarak yükleme (PWA)
+
+Android'de Chrome ile siteyi açın → alttaki **Uygulamayı yükle** (ya da ⋮ menü → *Uygulamayı yükle* /
+*Ana ekrana ekle*). Ana ekrana "Sünger CRM" simgesi gelir, tam ekran açılır. Giriş yapınca sol menünün altında
+"Telefona uygulama olarak yükle" düğmesi de çıkar. Müşteri verisi telefonda saklanmaz; internet yoksa
+"bağlantı yok" sayfası görünür. Dosyalar: `app/pwa.py`, `app/templates/pwa/`, `app/static/pwa/`.
+
 ## cPanel'e kurulum — CGI yöntemi (önerilen)
 
 Bu sunucuda Setup Python App yerine Günaydın CRM ile aynı CGI yöntemi kullanılır:

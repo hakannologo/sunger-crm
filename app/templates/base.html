@@ -6,6 +6,14 @@
   <meta name="robots" content="noindex, nofollow">
   <title>{% block baslik %}{% endblock %} · {{ firma_adi }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('pwa.manifest') }}">
+  <meta name="theme-color" content="#17594a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sünger CRM">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='pwa/favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='pwa/apple-touch-icon.png') }}">
+  <meta name="sw" content="{{ url_for('pwa.service_worker') }}">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   {% if kullanici %}<meta name="model-api" content="{{ url_for('urunler.api_modeller') }}">{% endif %}
 </head>
@@ -46,6 +54,7 @@
         <strong>{{ kullanici.ad_soyad }}</strong>
         <span>{{ 'Yönetici' if kullanici.rol == 'admin' else 'Kullanıcı' }}</span>
       </div>
+      <button type="button" class="baglanti-dugme uygulama-yukle" data-uygulama-yukle hidden>📱 Telefona uygulama olarak yükle</button>
       <a href="{{ url_for('auth.sifre_degistir') }}">Şifre değiştir</a>
       <form method="post" action="{{ url_for('auth.cikis') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

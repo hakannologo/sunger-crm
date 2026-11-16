@@ -325,3 +325,33 @@ document.querySelectorAll("form[data-otomatik-gonder]").forEach(function (form) 
     });
   });
 });
+
+// Telefona yüklenebilir uygulama (PWA): service worker kaydı ve "yükle" düğmesi
+(function () {
+  var sw = document.querySelector('meta[name="sw"]');
+  if (sw && "serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register(sw.content, { scope: "/" }).catch(function () {});
+    });
+  }
+  var bekleyen = null;
+  var dugmeler = document.querySelectorAll("[data-uygulama-yukle]");
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    bekleyen = e;
+    dugmeler.forEach(function (d) { d.hidden = false; });
+  });
+  dugmeler.forEach(function (d) {
+    d.addEventListener("click", function () {
+      if (!bekleyen) return;
+      bekleyen.prompt();
+      bekleyen.userChoice.finally(function () {
+        bekleyen = null;
+        dugmeler.forEach(function (x) { x.hidden = true; });
+      });
+    });
+  });
+  window.addEventListener("appinstalled", function () {
+    dugmeler.forEach(function (x) { x.hidden = true; });
+  });
+})();

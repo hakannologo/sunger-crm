@@ -73,7 +73,7 @@ def create_app(ayarlar=None):
                 session.clear()
 
         # Hiç yönetici yoksa her şey ilk kurulum ekranına yönlenir.
-        if request.endpoint not in ("auth.kurulum", "static"):
+        if request.endpoint not in ("auth.kurulum", "static") and not (request.endpoint or "").startswith("pwa."):
             admin_var = db.sorgu("SELECT 1 FROM kullanicilar WHERE rol = 'admin' LIMIT 1", tek=True)
             if admin_var is None:
                 return redirect(url_for("auth.kurulum"))
@@ -103,7 +103,7 @@ def create_app(ayarlar=None):
         return render_template("hata.html", baslik="Bir hata oluştu",
                                mesaj="Beklenmeyen bir sorun oldu. Tekrar deneyin; sürerse yöneticiye haber verin."), 500
 
-    from . import ana, auth, hammadde, satislar, tahsilat, talepler, urunler, yonetim
+    from . import ana, auth, hammadde, pwa, satislar, tahsilat, talepler, urunler, yonetim
     app.register_blueprint(auth.bp)
     app.register_blueprint(ana.bp)
     app.register_blueprint(talepler.bp)
@@ -112,5 +112,6 @@ def create_app(ayarlar=None):
     app.register_blueprint(urunler.bp)
     app.register_blueprint(yonetim.bp)
     app.register_blueprint(hammadde.bp)
+    app.register_blueprint(pwa.bp)
 
     return app
