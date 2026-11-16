@@ -43,6 +43,14 @@ Tek dış bağımlılık Flask'tır; veritabanı için ayrı bir sunucu gerekmez
 - 00000000000 gibi tek rakamdan oluşan numaralar kabul edilmez; daha önce böyle girilip tek müşteride birleşmiş
   satışlar güncellemede otomatik olarak ayrı müşterilere ayrılır.
 
+## 5. ek: hammadde maliyeti (yönetici)
+
+- Menü → **Hammadde maliyeti**: marka / model / parça seçilince her ürünün hammadde kilosu ve TL maliyeti
+  (KDV hariç ve dahil) görünür. Maliyet = kg × kilo fiyatı (€) × euro kuru.
+- Kilo fiyatı (varsayılan 2,60 €) ve KDV (%20) sayfadan değiştirilir. Euro kuru günde bir kez TCMB'den
+  (döviz satış) alınır; alınamazsa son kur kullanılır, kur elle de girilebilir (o gün geçerli).
+- Kilolar `app/data/hammadde.csv`'den yüklendi (320 ürün); eksikler ürün düzenleme sayfasından girilir.
+
 ## cPanel'e kurulum — CGI yöntemi (önerilen)
 
 Bu sunucuda Setup Python App yerine Günaydın CRM ile aynı CGI yöntemi kullanılır:

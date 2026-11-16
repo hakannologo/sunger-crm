@@ -457,11 +457,34 @@ def _sahte_numaralari_ayir(db):
             db.execute("DELETE FROM musteriler WHERE id = ?", (m_id,))
 
 
+# Ürün adlarındaki PDF kaynaklı yazım hataları (marka/model tabloları zaten doğru)
+AD_DUZELTMELERI = [("WW ", "VW "), ("Kango ", "Kangoo "), ("Coralla", "Corolla"), ("Sucuto", "Scudo"),
+                   ("Dally", "Daily")]
+
+
+def _goc_5_hammadde(db):
+    """Ürün başına hammadde kilosu, ayarlar tablosu (kilo fiyatı, KDV, euro kuru), ürün adı düzeltmeleri."""
+    db.execute("ALTER TABLE urunler ADD COLUMN hammadde_kg REAL")
+    db.execute("CREATE TABLE ayarlar (anahtar TEXT PRIMARY KEY, deger TEXT)")
+    db.executemany("INSERT INTO ayarlar (anahtar, deger) VALUES (?, ?)",
+                   [("hammadde_eur_kg", "2.60"), ("kdv_orani", "20")])
+    yol = os.path.join(os.path.dirname(__file__), "data", "hammadde.csv")
+    if os.path.exists(yol):
+        with open(yol, encoding="utf-8") as f:
+            db.executemany("UPDATE urunler SET hammadde_kg = ? WHERE kod = ?",
+                           [(float(r["hammadde_kg"]), r["kod"]) for r in csv.DictReader(f)])
+    zaman = simdi()
+    for eski, yeni_ad in AD_DUZELTMELERI:
+        db.execute("UPDATE urunler SET ad = replace(ad, ?, ?), guncelleme = ? WHERE instr(ad, ?) > 0",
+                   (eski, yeni_ad, zaman, eski))
+
+
 GOCLER = [
     _goc_1_temel_tablolar,
     _goc_2_talep_satis_musteri,
     _goc_3_tahsilat,
     _goc_4_pazaryeri,
+    _goc_5_hammadde,
 ]
 
 

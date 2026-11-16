@@ -34,6 +34,7 @@
       {% if kullanici.rol == 'admin' %}
         <div class="menu-grup">Yönetim</div>
         <a href="{{ url_for('yonetim.rapor') }}" class="{{ 'aktif' if ep == 'yonetim.rapor' }}">Talep raporu</a>
+        <a href="{{ url_for('hammadde.liste') }}" class="{{ 'aktif' if ep.startswith('hammadde.') }}">Hammadde maliyeti</a>
         <a href="{{ url_for('urunler.toplu_fiyat') }}" class="{{ 'aktif' if ep == 'urunler.toplu_fiyat' }}">Toplu fiyat girişi</a>
         <a href="{{ url_for('yonetim.markalar') }}" class="{{ 'aktif' if ep.startswith('yonetim.marka') }}">Marka / model</a>
         <a href="{{ url_for('yonetim.kullanicilar') }}" class="{{ 'aktif' if ep.startswith('yonetim.kullanici') }}">Kullanıcılar</a>

@@ -311,3 +311,17 @@
     if (telKutu.value) kisiSorgula();
   }
 })();
+
+// Filtre formu: seçim değişince kendiliğinden göster (hammadde maliyeti sayfası)
+document.querySelectorAll("form[data-otomatik-gonder]").forEach(function (form) {
+  form.querySelectorAll("select").forEach(function (sec) {
+    sec.addEventListener("change", function (e) {
+      // Marka değişince model listesi yüklenip "change" tetiklenir; o zaman model sıfırlanmış olarak gönder
+      if (sec.name === "marka") {
+        var model = form.querySelector("select[name=model]");
+        if (model) model.value = "";
+      }
+      form.submit();
+    });
+  });
+});

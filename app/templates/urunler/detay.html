@@ -22,6 +22,10 @@
     <dl class="bilgi-listesi">
       <dt>Perakende</dt><dd class="buyuk-tutar {{ 'eksik' if u.perakende_kurus is none }}">{{ u.perakende_kurus|tl }}</dd>
       <dt>Toptan</dt><dd class="buyuk-tutar {{ 'eksik' if u.toptan_kurus is none }}">{{ u.toptan_kurus|tl }}</dd>
+      {% if hm %}
+      <dt>Hammadde</dt><dd>{% if hm.kg %}{{ hm.kg }} kg{% if hm.maliyet[0] %} · <strong>{{ hm.maliyet[0]|tl }}</strong> + KDV = {{ hm.maliyet[1]|tl }}{% endif %}
+        <a class="kucuk" href="{{ url_for('hammadde.liste', q=u.kod) }}">maliyet sayfası →</a>{% else %}<span class="eksik">Kilo girilmemiş</span>{% endif %}</dd>
+      {% endif %}
     </dl>
     {% if u.orijinal_kod and u.orijinal_kod != u.kod %}
     <p class="soluk kucuk">Web sitesindeki kod: {{ u.orijinal_kod }}</p>

@@ -103,7 +103,7 @@ def create_app(ayarlar=None):
         return render_template("hata.html", baslik="Bir hata oluştu",
                                mesaj="Beklenmeyen bir sorun oldu. Tekrar deneyin; sürerse yöneticiye haber verin."), 500
 
-    from . import ana, auth, satislar, tahsilat, talepler, urunler, yonetim
+    from . import ana, auth, hammadde, satislar, tahsilat, talepler, urunler, yonetim
     app.register_blueprint(auth.bp)
     app.register_blueprint(ana.bp)
     app.register_blueprint(talepler.bp)
@@ -111,5 +111,6 @@ def create_app(ayarlar=None):
     app.register_blueprint(tahsilat.bp)
     app.register_blueprint(urunler.bp)
     app.register_blueprint(yonetim.bp)
+    app.register_blueprint(hammadde.bp)
 
     return app

@@ -24,6 +24,7 @@
   <div class="satir-alanlar">
     {{ alan('perakende', 'Perakende fiyat (₺)', form.perakende, hatalar=hatalar, ipucu='Boş bırakılabilir.', ozellikler='inputmode="decimal" placeholder="0,00"') }}
     {{ alan('toptan', 'Toptan fiyat (₺)', form.toptan, hatalar=hatalar, ipucu='Boş bırakılabilir.', ozellikler='inputmode="decimal" placeholder="0,00"') }}
+    {{ alan('hammadde_kg', 'Hammadde (kg)', form.hammadde_kg, hatalar=hatalar, ipucu='Bu ürüne giden sünger hammaddesi. Maliyet hesabında kullanılır.', ozellikler='inputmode="decimal" placeholder="0,00"') }}
   </div>
   <label class="onay"><input type="checkbox" name="aktif" value="1" {{ 'checked' if form.aktif }}> Aktif (satışta görünsün)</label>
   {% if u %}<p class="soluk kucuk">Ürünler silinmez; geçmiş satışlarda kayıtlı kalması için satıştan kaldırmak istediğinizde pasife alın.</p>{% endif %}

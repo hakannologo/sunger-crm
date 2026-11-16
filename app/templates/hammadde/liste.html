@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% from "_makrolar.html" import sayfalama, arac_etiketleri, csrf %}
+{% block baslik %}Hammadde maliyeti{% endblock %}
+{% block icerik %}
+{% set kur = birim.kur %}
+<div class="sayfa-baslik">
+  <div>
+    <h1>Hammadde maliyeti</h1>
+    <p class="soluk">Aracı ve ürünü seçin; ürüne giden hammaddenin TL maliyeti yanında görünür.</p>
+  </div>
+</div>
+
+<div class="kart hm-ozet">
+  <div class="hm-kutular">
+    <div><span class="soluk">Hammadde fiyatı</span><strong>{{ ('%.2f'|format(birim.eur_kg))|replace('.', ',') }} € / kg</strong><span class="soluk kucuk">+ KDV %{{ '%g'|format(birim.kdv) }}</span></div>
+    <div><span class="soluk">Euro kuru</span>
+      {% if kur.kur %}<strong>{{ ('%.4f'|format(kur.kur))|replace('.', ',') }} ₺</strong>
+      <span class="soluk kucuk">{{ 'Merkez Bankası döviz satış' if kur.kaynak == 'tcmb' else 'Elle girildi' }}{% if kur.tarih %} · {{ kur.tarih }}{% endif %}</span>
+      {% else %}<strong class="eksik">Kur yok</strong>{% endif %}
+    </div>
+    <div><span class="soluk">1 kg hammadde</span>
+      {% if birim.kg_kurus %}<strong>{{ birim.kg_kurus|tl }}</strong><span class="soluk kucuk">KDV dahil {{ (birim.kg_kurus * (1 + birim.kdv / 100))|round|int|tl }}</span>
+      {% else %}<strong class="eksik">—</strong>{% endif %}
+    </div>
+  </div>
+  {% if kur.hata %}<div class="mesaj mesaj-hata">{{ kur.hata }}{% if kur.kur %} Şimdilik son bilinen kur kullanılıyor.{% endif %}</div>{% endif %}
+  <details class="hm-ayar" {{ 'open' if not kur.kur }}>
+    <summary>Fiyatı / kuru değiştir</summary>
+    <form method="post" action="{{ url_for('hammadde.ayarlar', **f) }}" class="satir-alanlar">
+      {{ csrf() }}
+      <div class="alan">
+        <label for="h-eur">Kilo fiyatı (€, KDV hariç)</label>
+        <input id="h-eur" name="eur_kg" inputmode="decimal" value="{{ ('%.2f'|format(birim.eur_kg))|replace('.', ',') }}">
+      </div>
+      <div class="alan">
+        <label for="h-kdv">KDV (%)</label>
+        <input id="h-kdv" name="kdv" inputmode="decimal" value="{{ '%g'|format(birim.kdv) }}">
+      </div>
+      <div class="alan">
+        <label for="h-kur">Euro kurunu elle gir (₺)</label>
+        <input id="h-kur" name="kur" inputmode="decimal" placeholder="Ör. 44,38">
+        <div class="alan-ipucu">Elle girilen kur bugün geçerlidir; yarın yine Merkez Bankası kuru alınır.</div>
+      </div>
+      <div class="alan hm-dugmeler">
+        <button type="submit" class="dugme">Kaydet</button>
+        {% if kur.kaynak == 'elle' or kur.hata %}<button type="submit" name="tcmb" value="1" class="dugme dugme-ikincil">Merkez Bankası kurunu al</button>{% endif %}
+      </div>
+    </form>
+  </details>
+</div>
+
+<form class="kart filtre" method="get" data-otomatik-gonder>
+  <div class="satir-alanlar">
+    <div class="alan">
+      <label for="f-marka">Marka</label>
+      <select id="f-marka" name="marka" data-model-hedef="f-model">
+        <option value="">Tümü</option>
+        {% for m in markalar %}<option value="{{ m.id }}" {{ 'selected' if f.get('marka') == m.id|string }}>{{ m.ad }}</option>{% endfor %}
+        <option value="genel" {{ 'selected' if f.get('marka') == 'genel' }}>Genel (araç bağımsız)</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-model">Model</label>
+      <select id="f-model" name="model" {{ 'disabled' if not modeller }}>
+        <option value="">{{ 'Tüm modeller' if modeller else 'Önce marka seçin' }}</option>
+        {% for mo in modeller %}<option value="{{ mo.id }}" {{ 'selected' if f.get('model') == mo.id|string }}>{{ mo.ad }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan">
+      <label for="f-tip">Ürün (parça)</label>
+      <select id="f-tip" name="tip">
+        <option value="">Tümü</option>
+        {% for t in tipler %}<option {{ 'selected' if f.get('tip') == t }}>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="alan alan-genis">
+      <label for="f-q">Ara</label>
+      <input id="f-q" name="q" type="search" value="{{ f.get('q', '') }}" placeholder="Ürün adı veya kodu">
+    </div>
+  </div>
+  <div class="filtre-alt">
+    <label class="onay"><input type="checkbox" name="kilo" value="eksik" {{ 'checked' if f.get('kilo') == 'eksik' }}> Sadece kilosu girilmemiş olanlar{% if eksik %} ({{ eksik }}){% endif %}</label>
+    <div>
+      <a href="{{ url_for('hammadde.liste') }}" class="dugme dugme-ikincil">Temizle</a>
+      <button type="submit" class="dugme">Göster</button>
+    </div>
+  </div>
+</form>
+
+<div class="kart tablo-kart">
+  {% if satirlar %}
+  <div class="tablo-sarmal">
+  <table class="tablo">
+    <thead>
+      <tr>
+        <th>Ürün</th>
+        <th class="gizle-mobil">Uyumlu araçlar</th>
+        <th class="sag">Hammadde</th>
+        <th class="sag">Maliyet<br><span class="kucuk soluk">KDV hariç</span></th>
+        <th class="sag">Maliyet<br><span class="kucuk soluk">KDV dahil</span></th>
+        <th class="sag gizle-mobil">Perakende fiyat</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in satirlar %}{% set u = s.u %}
+      <tr class="{{ 'pasif-satir' if not u.aktif }}">
+        <td>
+          <a href="{{ url_for('urunler.detay', urun_id=u.id) }}" class="urun-adi">{{ u.ad }}</a>
+          <div class="alt-bilgi">{{ u.kod }} · {{ u.parca_tipi }}</div>
+        </td>
+        <td class="gizle-mobil etiketler">{{ arac_etiketleri(uyum.get(u.id, [])) }}</td>
+        {% if u.hammadde_kg %}
+        <td class="sag nowrap">{{ ('%g'|format(u.hammadde_kg))|replace('.', ',') }} kg</td>
+        <td class="sag tutar">{{ s.maliyet[0]|tl if s.maliyet[0] else '—' }}</td>
+        <td class="sag tutar"><strong>{{ s.maliyet[1]|tl if s.maliyet[1] else '—' }}</strong></td>
+        {% else %}
+        <td class="sag" colspan="3"><a class="eksik" href="{{ url_for('urunler.duzenle', urun_id=u.id) }}">Kilo girilmemiş — gir</a></td>
+        {% endif %}
+        <td class="sag tutar gizle-mobil {{ 'eksik' if u.perakende_kurus is none }}">{{ u.perakende_kurus|tl }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ sayfalama(sayfa) }}
+  {% else %}
+  <div class="bos-durum">
+    <p><strong>Bu seçime uyan ürün yok.</strong></p>
+    <p class="soluk">Modeli “Tüm modeller” yapmayı ya da filtreleri temizlemeyi deneyin.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

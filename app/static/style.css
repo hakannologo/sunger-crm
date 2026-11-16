@@ -409,3 +409,13 @@ textarea { font: inherit; color: var(--yazi); background: #fff; border: 1px soli
   .takvim-gun { min-height: 0; }
   .takvim-gun-kisa { display: inline; }
 }
+
+/* Hammadde maliyeti */
+.hm-kutular { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.hm-kutular > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--zemin); }
+.hm-kutular strong { font-size: 1.25rem; }
+.hm-ozet .mesaj { margin-top: 12px; }
+.hm-ayar { margin-top: 12px; }
+.hm-ayar summary { cursor: pointer; font-weight: 600; color: var(--ana); padding: 4px 0; }
+.hm-ayar form { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+.hm-dugmeler { flex-direction: row !important; flex-wrap: wrap; gap: 8px; align-items: center; grid-column: 1 / -1; }

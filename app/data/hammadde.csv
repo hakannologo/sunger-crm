@@ -1,0 +1,321 @@
+kod,hammadde_kg,listedeki_ad
+SM-BASLIK-004,0.2,R-12 başlık
+SM-BASLIK-005,0.2,Vito başlık
+SM-BASLIK-006,0.16,Pejo 206 arka başlık
+SM-BASLIK-008,0.28,Reno Kangoo başlık
+SM-BASLIK-009,0.26,Doblo ön başlık
+SM-BASLIK-010,0.16,Doblo arka başlık
+SM-BASLIK-011,0.2,Connect ön başlık
+SM-BASLIK-012,0.16,Connect arka başlık
+SM-BASLIK-013,0.28,Doğan SLX ön başlık
+SM-BASLIK-014,0.22,Doğan SLX arka başlık
+SM-BASLIK-015,0.25,Şahin ön başlık
+SM-BASLIK-016,0.2,Transit başlık
+SM-BASLIK-017,0.25,Tombul başlık 1
+SM-BASLIK-018,0.25,Tombul başlık 2
+SM-BASLIK-019,0.24,T-4 başlık
+SM-BASLIK-020,0.22,T-5 başlık
+SM-BMC-001,1.55,BMC 2'li oturak
+SM-BMW-001,1.38,BMW 5.20 oturak
+SM-BMW-002,1.45,BMW 5.20 sırt
+SM-BMW-003,1.1,BMW M3 oturak
+SM-BMW-004,1.4,BMW M3 sırt
+SM-BMW-006,1.28,BMW E36 sırt
+SM-BMW-007,0.2,BMW E36 başlık
+SM-BMW-008,0.45,BMW M3 başlık
+SM-BMW-009,0.22,BMW M3 baldır
+SM-CHEVROLET-001,1.3,Captiva oturak
+SM-CITROEN-001,1.25,Berlingo oturak
+SM-CITROEN-002,1.4,Berlingo yeni model oturak
+SM-CITROEN-003,1.3,Jumper oturak
+SM-CITROEN-004,1.3,Nemo oturak
+SM-CITROEN-006,1.35,C-4 oturak
+SM-CITROEN-007,1.2,Elysea oturak
+SM-DACIA-001,1.25,Dacia Stepway oturak
+SM-DACIA-002,1.55,Dacia Stepway sırt
+SM-DACIA-003,1.25,Dacia Logan oturak
+SM-DACIA-004,1.45,Dacia Logan sırt
+SM-DACIA-005,1.25,Dacia Lodgy oturak
+SM-DACIA-006,1.55,Dacia Lodgy sırt
+SM-DACIA-007,1.25,Dacia Duster oturak
+SM-DACIA-008,1.55,Dacia Duster sırt
+SM-DAF-001,1.55,DAF sırt
+SM-FIAT-001,1.65,Fiat Ducato uzun sırt
+SM-FIAT-002,1.3,Yeni Fiat Ducato oturak
+SM-FIAT-003,2.2,Fiat Ducato 2'li oturak
+SM-FIAT-004,1.45,Eski Fiat Ducato oturak
+SM-FIAT-005,1.4,Doğan SLX oturak
+SM-FIAT-006,1.3,Doğan SLX sırt
+SM-FIAT-007,4.7,Doğan SLX arka 3'lü oturak
+SM-FIAT-008,4.8,Doğan SLX arka 3'lü sırt
+SM-FIAT-009,1.2,Fiat Albea oturak
+SM-FIAT-010,1.4,Fiat Albea sırt
+SM-FIAT-011,1.25,Fiat Linea oturak
+SM-FIAT-012,1.45,Fiat Linea sırt
+SM-FIAT-013,1.2,Fiat Egea oturak
+SM-FIAT-014,1.55,Fiat Egea sırt
+SM-FIAT-015,1.25,Fiat Siena oturak
+SM-FIAT-016,1.3,Fiat Marea oturak
+SM-FIAT-017,1.65,Fiat Fiorino PATRIKO sırt
+SM-FIAT-018,1.4,Fiat Scudo oturak
+SM-FIAT-019,1.25,Fiat Punto oturak
+SM-FIAT-020,1.45,Fiat Punto sırt
+SM-FIAT-021,1.25,Doblo Van oturak
+SM-FIAT-022,1.45,Doblo sırt (yeni model)
+SM-FIAT-023,1.3,Doblo (U) oturak
+SM-FIAT-024,1.45,Doblo (U) sırt
+SM-FIAT-025,1.65,Yeni Doblo (PATRIKO) sırt
+SM-FIAT-026,1.3,Fiorino oturak
+SM-FIAT-027,1.5,Şahin oturak
+SM-FIAT-028,1.4,Şahin sırt
+SM-FIAT-031,1.35,Doblo arka tekli oturak
+SM-FIAT-032,1.4,Doblo Van sırt
+SM-FIAT-033,1.4,Fiat Ducato kısa sırt
+SM-FIAT-034,1.35,Fiat Uno oturak
+SM-FIAT-035,1.3,Fiat Uno sırt
+SM-FIAT-036,1.4,Fiat Albea Sole sırt
+SM-FIAT-037,1.3,Albea Sole oturak
+SM-FIAT-038,1.45,Fiorino yeni model sırt
+SM-FIAT-039,1.4,Fiat Marea sırt
+SM-FORD-001,1.38,Yeni model Ford Transit (altı çukurlu) oturak
+SM-FORD-002,1.45,Ford Transit altı düz oturak
+SM-FORD-003,1.26,Ford Transit ince oturak
+SM-FORD-005,2.4,Ford Transit eski 2'li (altı düz) oturak
+SM-FORD-006,2.25,Ford Transit yeni 2'li (altı çukurlu) oturak
+SM-FORD-007,1.45,Ford Connect 1 eski oturak
+SM-FORD-008,1.35,Ford Connect 2 yeni oturak
+SM-FORD-009,2,Ford Connect arka 2'li oturak
+SM-FORD-010,1.15,Ford Connect arka tekli oturak
+SM-FORD-011,1.25,Ford Custom oturak
+SM-FORD-012,1.55,Ford Custom sırt
+SM-FORD-013,1.25,Ford Custom / yeni model Transit oturak
+SM-FORD-014,1.25,Ford Courier oturak
+SM-FORD-015,1.6,Ford Courier sırt
+SM-FORD-016,1.2,Ford Kargo oturak
+SM-FORD-017,1.25,Ford Ranger oturak
+SM-FORD-018,1.15,Ford Fiesta eski oturak
+SM-FORD-019,1.25,Ford Fiesta yeni oturak
+SM-FORD-020,3.1,Ford Courier 3'lü oturak
+SM-FORD-021,3,Ford Courier 3'lü sırt
+SM-FORD-022,1.3,Ford Escort oturak
+SM-FORD-023,1,Ford Kargo yeni (3230) oturak
+SM-FORD-024,2.3,Ford Courier arka ikili sırt
+SM-FORD-025,2.45,Ford Courier arka ikili oturak
+SM-FORD-026,1.2,Ford Focus oturak
+SM-FORD-028,1.4,Ford Connect sırt
+SM-FORD-039,1.2,Ford Taunus oturak
+SM-FORD-040,1.35,Ford Taunus sırt
+SM-HYUNDAI-001,0.95,Hyundai H-100 eski kasa oturak
+SM-HYUNDAI-002,1.1,Hyundai H-100 yeni kasa oturak
+SM-HYUNDAI-003,2.3,Hyundai H-100 2'li oturak
+SM-HYUNDAI-004,1.2,Hyundai Accent Era oturak
+SM-HYUNDAI-005,1.2,Hyundai Accent Blue oturak
+SM-HYUNDAI-006,1.4,Hyundai Era sırt
+SM-HYUNDAI-007,1.25,Starex oturak
+SM-HYUNDAI-008,1.25,Honda Civic oturak
+SM-HYUNDAI-009,1.2,Honda CRV oturak
+SM-HYUNDAI-010,1.55,Hyundai H-100 sırt
+SM-IS-001,1.25,Forklift oturak
+SM-IS-002,1.25,Kepçe oturak
+SM-IS-003,1.1,Yeni forklift oturak
+SM-ISUZU-001,1.25,Isuzu yeni oturak
+SM-ISUZU-002,1.25,Isuzu Şampiyon eski oturak
+SM-ISUZU-003,0.75,Isuzu Nova oturak (yolcu)
+SM-ISUZU-004,1.3,Isuzu D-Max çift kabin oturak
+SM-ISUZU-005,2.4,Isuzu 2'li yeni model oturak
+SM-ISUZU-006,2.4,Isuzu 2'li eski model oturak
+SM-ISUZU-007,1.25,D-Max 4*2 oturak
+SM-ISUZU-008,1.3,D-Max 4*4 oturak
+SM-ISUZU-009,1.25,Isuzu Şampiyon sırt
+SM-ISUZU-010,1.25,D-Max çift kabin yeni model oturak
+SM-IVECO-001,1.3,Iveco (65-9/80-12) oturak
+SM-IVECO-003,1.25,Iveco Daily oturak
+SM-KIA-001,1,Kia Çerez oturak
+SM-KIA-002,1,Eski Kia Bongo oturak
+SM-KIA-003,1.1,Yeni Kia Bongo oturak
+SM-KOLCAK-001,0.33,Büyük kolçak
+SM-KOLCAK-002,0.18,Orta kolçak
+SM-KOLCAK-004,0.16,Sağ ince kolçak
+SM-KOLCAK-005,0.16,Sol ince kolçak
+SM-KOLCAK-006,0.17,Lodgy kolçak
+SM-KOLCAK-007,0.17,Lodgy orta sağ kolçak
+SM-KOLCAK-008,0.17,Lodgy orta sol kolçak
+SM-KOLCAK-009,0.16,Peugeot Partner / Citroen Berlingo sağ kolçak
+SM-KOLCAK-010,0.16,Peugeot Partner / Citroen Berlingo sol kolçak
+SM-KOLCAK-013,0.18,Yeni model ince sağ kolçak
+SM-KOLCAK-014,0.16,Yeni model ince sol kolçak
+SM-KOLCAK-015,0.18,Yeni model orta sağ kolçak
+SM-KOLCAK-016,0.22,Yeni model orta sol kolçak
+SM-KOLCAK-017,0.16,Transporter kolçak (sağ)
+SM-KOLCAK-019,0.15,Transit kolçak (sağ)
+SM-KOLCAK-020,0.15,Transit kolçak (sol)
+SM-KOLCAK-022,0.22,Uzun orta kolçak (sağ)
+SM-KOLCAK-023,0.22,Uzun orta kolçak (sol)
+SM-LADA-001,1.55,Lada oturak
+SM-LADA-002,1.25,Lada sırt
+SM-MAN-001,1.5,MAN sırt
+SM-MAZDA-001,1.9,Mazda 2'li oturak
+SM-MAZDA-002,1.25,Mazda çift kabin oturak
+SM-MAZDA-003,1.05,Mazda tekli oturak
+SM-MERCEDES-001,0.95,Aksor eski oturak
+SM-MERCEDES-002,1.7,Yeni Aksor uzun sırt
+SM-MERCEDES-003,1.5,Eski Aksor sırt
+SM-MERCEDES-004,0.9,Aksor yeni oturak
+SM-MERCEDES-005,1.1,123 kasa oturak
+SM-MERCEDES-006,1.2,123 kasa eski sırt
+SM-MERCEDES-007,1.4,123 kasa yeni sırt
+SM-MERCEDES-010,1.15,Sprinter-1 oturak
+SM-MERCEDES-011,1.25,Sprinter-2 oturak
+SM-MERCEDES-012,1.4,Sprinter-2 sırt
+SM-MERCEDES-013,1.35,Vito eski oturak
+SM-MERCEDES-014,1.25,Vito yeni model oturak
+SM-MITSUBISHI-001,1,Fuso Canter eski oturak
+SM-MITSUBISHI-002,1.08,Fuso yeni oturak
+SM-MITSUBISHI-003,2.4,Fuso Canter 2'li oturak
+SM-MITSUBISHI-004,1.3,L-200 1 kasa oturak
+SM-MITSUBISHI-005,1.25,L-200 2 kasa oturak
+SM-MITSUBISHI-006,1.25,L-200 yeni kasa oturak
+SM-MITSUBISHI-007,0.95,L-300 oturak (şoför)
+SM-MITSUBISHI-008,2.3,L-300 2'li oturak
+SM-MITSUBISHI-009,1.05,L-300 yeni oturak sağ
+SM-MITSUBISHI-010,1.25,L-200 full paket sağ oturak
+SM-MITSUBISHI-011,1.25,L-200 full paket sol oturak
+SM-MITSUBISHI-012,1.35,Mitsubishi Carisma oturak
+SM-MITSUBISHI-013,2.4,Canter 2'li oturak
+SM-MITSUBISHI-014,1.08,Mitsubishi Fuso oturak
+SM-MITSUBISHI-015,1.25,L-200 oturak 3 kasa
+SM-MITSUBISHI-018,2.25,FUSO Canter yeni 2'li oturak
+SM-NISSAN-001,1.4,Nissan Qashqai oturak
+SM-NISSAN-002,1.35,Nissan Juke oturak
+SM-NISSAN-003,1.3,Nissan Navara oturak
+SM-NISSAN-004,1.3,Nissan Skaystar oturak
+SM-OPEL-001,1.25,Opel Corsa oturak
+SM-OPEL-002,1.2,Opel Corsa sırt
+SM-OPEL-003,1.25,Opel Corsa-D oturak
+SM-OPEL-004,1.35,Opel Corsa-D sırt
+SM-OPEL-005,1.25,Opel Combo oturak
+SM-OPEL-006,1.35,Opel Vectra oturak
+SM-OPEL-007,1.35,Opel Astra oturak
+SM-OPEL-008,1.2,Opel Astra yeni oturak (H kasa)
+SM-OPEL-009,1.35,Opel Astra sırt
+SM-OPEL-010,1.35,Opel Astra A kasa oturak
+SM-OPEL-011,1.35,Opel Astra A kasa sırt
+SM-OPEL-012,1.28,Opel Astra B kasa oturak
+SM-OPEL-013,1.35,Opel Astra B kasa sırt
+SM-OPEL-014,1.35,Opel Vectra sırt
+SM-OPEL-015,1.35,Opel Vectra A kasa oturak
+SM-OPEL-016,1.35,Opel Vectra A kasa sırt
+SM-OPEL-017,1.3,Opel Vectra B kasa oturak
+SM-OPEL-018,1.35,Opel Vectra B kasa sırt
+SM-OPEL-019,1.2,Opel Corsa Combo sırt
+SM-OPEL-020,1.2,Opel Vectra C oturak
+SM-OPEL-021,1.2,Opel Astra G kasa oturak
+SM-PEJO-001,1.25,Pejo Partner oturak
+SM-PEJO-002,1.3,Pejo 307 oturak
+SM-PEJO-003,1.5,Pejo 307 sırt
+SM-PEJO-004,1.45,Pejo 206 oturak
+SM-PEJO-005,1.18,Pejo 301 oturak
+SM-PEJO-006,1.3,Pejo Boxer oturak
+SM-PEJO-007,1.3,Pejo Bipper oturak
+SM-PEJO-008,1.15,Pejo Karsan şoför oturak
+SM-PEJO-009,1.4,Pejo Partner Tepee oturak
+SM-PEJO-010,1.25,Pejo Partner arka tekli oturak
+SM-PEJO-011,1.4,Pejo Partner sırt
+SM-PEJO-012,1.1,Karsan Jest sırt
+SM-PEJO-013,1.25,Pejo Karsan yolcu sırt
+SM-PILOT-001,0.95,Pilot havalı şekilli oturak
+SM-PILOT-002,1.05,Yeni model Pilot havalı oturak
+SM-PILOT-003,1.05,Pilot Şahin Bakışlı (FORD Kargo)
+SM-PILOT-005,1,Pilot etekli oturak (BMC)
+SM-PILOT-006,0.9,Pilot eteksiz oturak (BMC)
+SM-PILOT-007,1.1,Pilot uzun sırt
+SM-PILOT-008,1.05,Pilot kısa sırt
+SM-RENAULT-001,1.1,Reno Kangoo 1 oturak
+SM-RENAULT-002,1.1,Reno Kangoo 2 oturak
+SM-RENAULT-003,1.35,Reno Kangoo 3 oturak
+SM-RENAULT-004,1.3,Reno Master 2 oturak
+SM-RENAULT-005,1.35,Reno Master 3 oturak
+SM-RENAULT-006,1,Reno Master 2'li (yeni) oturak
+SM-RENAULT-007,1.45,Reno Traffic oturak
+SM-RENAULT-008,2.15,Reno Traffic 2'li oturak
+SM-RENAULT-009,1.4,Reno-9 (BROADWAY) oturak
+SM-RENAULT-010,1.45,Reno-9 (BOADWAY) sırt
+SM-RENAULT-011,1,Reno-12 oturak
+SM-RENAULT-012,1.45,Reno-12 sırt
+SM-RENAULT-013,1.35,Reno-19 oturak
+SM-RENAULT-014,1.45,Reno-19 sırt
+SM-RENAULT-015,1.4,Reno RNI (R-9) oturak
+SM-RENAULT-016,1.35,Reno RNI (R-9) sırt
+SM-RENAULT-017,1.25,Reno Fluence oturak
+SM-RENAULT-018,1.4,Reno Fluence sırt
+SM-RENAULT-019,1.3,Reno Clio-1 oturak
+SM-RENAULT-020,1.35,Reno Clio-1 sırt
+SM-RENAULT-021,1.3,Reno Clio-2 oturak
+SM-RENAULT-022,1.35,Reno Clio-2 sırt
+SM-RENAULT-023,1.25,Reno Clio-3 oturak
+SM-RENAULT-024,1.5,Reno Megan-1 oturak
+SM-RENAULT-025,1.45,Reno Megan-1 sırt
+SM-RENAULT-026,1.3,Reno Megan-2 oturak
+SM-RENAULT-027,1.4,Reno Megan-2 sırt
+SM-RENAULT-028,0.96,Reno 420 oturak
+SM-RENAULT-029,1.5,Reno Clio 3 sırt
+SM-RENAULT-030,1.28,Reno Clio 4 oturak
+SM-RENAULT-031,1.5,Reno Clio-4 sırt
+SM-RENAULT-032,1.3,Eski Symbol oturak
+SM-RENAULT-033,1.35,Eski Symbol sırt
+SM-RENAULT-034,1.25,Yeni Symbol oturak
+SM-RENAULT-035,1.55,Yeni Symbol sırt
+SM-RENAULT-036,1.55,Renault Traffic sırt
+SM-RENAULT-037,1.35,Renault Kangoo 1 sırt
+SM-RENAULT-038,1.35,Renault Kangoo 2 sırt
+SM-RENAULT-039,2.2,Renault Master 2'li (eski) oturak
+SM-SCANIA-001,0.9,Scania 360 oturak
+SM-SCANIA-002,0.96,Scania 420 oturak
+SM-SEAT-001,1.25,Seat Toledo oturak
+SM-SKODA-001,1.25,Skoda Octavia oturak
+SM-TOYOTA-001,1.4,Toyota Corolla oturak
+SM-TOYOTA-002,1.3,Toyota Hilux eski model 4*2 oturak
+SM-TOYOTA-003,1.3,Toyota Yaris oturak
+SM-TOYOTA-004,1.5,Toyota Corolla sırt
+SM-TOYOTA-005,1.5,Toyota Corolla yeni model sırt
+SM-TOYOTA-006,1.25,Toyota 101 oturak
+SM-TOYOTA-007,1.45,Toyota 101 sırt
+SM-TOYOTA-008,1.35,Toyota Terra - Toyota Avensis oturak
+SM-TOYOTA-009,1.25,Toyota Corolla (2013/14/15/16/17/2018 model) oturak
+SM-TRAKTOR-001,0.65,Traktör oturak
+SM-TRAKTOR-002,0.45,Traktör sırt
+SM-VIP-001,2,(2+1) 2'li oturak
+SM-VIP-002,2,(2+1) 2'li sırt
+SM-VIP-003,1.15,(2+1) tekli oturak
+SM-VIP-004,1.1,(2+1) tekli sırt
+SM-VIP-005,7.65,(2+1) 3'lü takım
+SM-VIP-009,3.25,3'lü 130'luk ince takım
+SM-VIP-010,3.6,3'lü 130'luk kalın takım
+SM-VIP-011,4.45,VIP 3'lü 120'lik (S-model) takım
+SM-VIP-019,4.45,120'lik takım
+SM-VIP-023,4.7,TFN model 4'lü takım
+SM-VIP-026,4.5,VIP 3'lü 130'luk (S-model) takım
+SM-VOLVO-001,1.1,Volvo 420 oturak
+SM-VOLVO-002,1.1,Volvo 460 oturak
+SM-WW-001,1.45,VW Polo sırt
+SM-WW-002,1.25,VW Polo oturak
+SM-WW-004,1.25,VW Golf-4 oturak
+SM-WW-005,1.25,VW Bora oturak
+SM-WW-007,1.25,VW Golf-Passat oturak
+SM-WW-008,1.45,VW Passat oturak
+SM-WW-009,1.4,VW Passat yeni oturak
+SM-WW-010,1.25,VW Crafter oturak
+SM-WW-011,1.4,VW Crafter sırt
+SM-WW-012,1,VW Crafter yolcu oturak
+SM-WW-014,1.35,VW T-4 oturak
+SM-WW-015,1.2,VW T-4 sırt
+SM-WW-016,1.4,VW T-5 oturak
+SM-WW-017,1.55,VW T-5 sırt
+SM-WW-018,1.25,VW Caddy oturak
+SM-WW-019,1.3,VW Amarok oturak
+SM-WW-020,1.15,VW LT-35 oturak
+SM-WW-021,1.45,VW Caddy sırt
+SM-WW-022,1,VW Crafter 3 yolcu oturak
+SM-WW-023,1,VW Crafter 2 yolcu oturak
+SM-WW-024,1,VW Crafter 1 yolcu oturak
+SM-WW-026,1.45,VW Golf 2 oturak

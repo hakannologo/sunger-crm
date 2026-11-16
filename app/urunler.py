@@ -10,6 +10,11 @@ bp = Blueprint("urunler", __name__, url_prefix="/urunler")
 SAYFA_BOYUTU = 50
 
 
+def kg_yaz(kg):
+    """1.25 -> '1,25'; boşsa ''."""
+    return "" if kg is None else f"{kg:g}".replace(".", ",")
+
+
 def kategoriler():
     return [r["kategori"] for r in sorgu("SELECT DISTINCT kategori FROM urunler ORDER BY kategori")]
 
@@ -124,9 +129,15 @@ def liste():
 @giris_gerekli
 def detay(urun_id):
     u = urun_getir(urun_id)
+    hm = None
+    if g.kullanici["rol"] == "admin":
+        from .hammadde import birim_bilgisi, maliyet   # döngüsel içe aktarmayı önlemek için burada
+        birim = birim_bilgisi()
+        hm = {"kg": kg_yaz(u["hammadde_kg"]), "maliyet": maliyet(u["hammadde_kg"], birim), "birim": birim}
     return render_template(
         "urunler/detay.html",
         u=u,
+        hm=hm,
         uyum=uyumluluklar([u["id"]]).get(u["id"], []),
         markalar=sorgu("SELECT id, ad FROM markalar ORDER BY ad"),
     )
@@ -134,7 +145,7 @@ def detay(urun_id):
 
 def _form_oku(mevcut_id=None):
     form = {k: request.form.get(k, "").strip() for k in
-            ("kod", "ad", "kategori", "parca_tipi", "perakende", "toptan")}
+            ("kod", "ad", "kategori", "parca_tipi", "perakende", "toptan", "hammadde_kg")}
     form["kod"] = form["kod"].upper()
     form["aktif"] = request.form.get("aktif") == "1"
     hatalar = {}
@@ -156,6 +167,14 @@ def _form_oku(mevcut_id=None):
             fiyatlar[alan] = tl_oku(form[alan])
         except ValueError:
             hatalar[alan] = "Geçerli bir tutar yazın (ör. 1250 veya 1.250,50)."
+    fiyatlar["hammadde_kg"] = None
+    if form["hammadde_kg"]:
+        try:
+            fiyatlar["hammadde_kg"] = float(form["hammadde_kg"].replace(",", "."))
+            if not 0 < fiyatlar["hammadde_kg"] < 100:
+                raise ValueError
+        except ValueError:
+            hatalar["hammadde_kg"] = "Kiloyu sayı olarak yazın (ör. 1,25)."
     return form, fiyatlar, hatalar
 
 
@@ -163,18 +182,18 @@ def _form_oku(mevcut_id=None):
 @admin_gerekli
 def yeni():
     form = {"kod": "", "ad": "", "kategori": request.args.get("kategori", ""), "parca_tipi": "Oturak",
-            "perakende": "", "toptan": "", "aktif": True}
+            "perakende": "", "toptan": "", "hammadde_kg": "", "aktif": True}
     hatalar = {}
     if request.method == "POST":
         form, fiyatlar, hatalar = _form_oku()
         if not hatalar:
             db = baglanti()
             cur = db.execute(
-                """INSERT INTO urunler (kod, ad, kategori, parca_tipi, perakende_kurus, toptan_kurus, aktif,
-                                        olusturma, guncelleme)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                """INSERT INTO urunler (kod, ad, kategori, parca_tipi, perakende_kurus, toptan_kurus, hammadde_kg,
+                                        aktif, olusturma, guncelleme)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (form["kod"], form["ad"], form["kategori"], form["parca_tipi"], fiyatlar["perakende"],
-                 fiyatlar["toptan"], int(form["aktif"]), simdi(), simdi()),
+                 fiyatlar["toptan"], fiyatlar["hammadde_kg"], int(form["aktif"]), simdi(), simdi()),
             )
             islem_kaydet("Ürün eklendi", f"{form['kod']} — {form['ad']}")
             db.commit()
@@ -190,7 +209,7 @@ def duzenle(urun_id):
     u = urun_getir(urun_id)
     form = {"kod": u["kod"], "ad": u["ad"], "kategori": u["kategori"], "parca_tipi": u["parca_tipi"],
             "perakende": tl_girdi(u["perakende_kurus"]), "toptan": tl_girdi(u["toptan_kurus"]),
-            "aktif": bool(u["aktif"])}
+            "hammadde_kg": kg_yaz(u["hammadde_kg"]), "aktif": bool(u["aktif"])}
     hatalar = {}
     if request.method == "POST":
         form, fiyatlar, hatalar = _form_oku(urun_id)
@@ -201,6 +220,7 @@ def duzenle(urun_id):
                          ("Parça", u["parca_tipi"], form["parca_tipi"]),
                          ("Perakende", tl_yaz(u["perakende_kurus"]), tl_yaz(fiyatlar["perakende"])),
                          ("Toptan", tl_yaz(u["toptan_kurus"]), tl_yaz(fiyatlar["toptan"])),
+                         ("Hammadde kg", kg_yaz(u["hammadde_kg"]), kg_yaz(fiyatlar["hammadde_kg"])),
                          ("Durum", "aktif" if u["aktif"] else "pasif", "aktif" if form["aktif"] else "pasif")]
             for ad, eski, yeni_deger in eski_yeni:
                 if eski != yeni_deger:
@@ -208,9 +228,9 @@ def duzenle(urun_id):
             db = baglanti()
             db.execute(
                 """UPDATE urunler SET kod = ?, ad = ?, kategori = ?, parca_tipi = ?, perakende_kurus = ?,
-                       toptan_kurus = ?, aktif = ?, guncelleme = ? WHERE id = ?""",
+                       toptan_kurus = ?, hammadde_kg = ?, aktif = ?, guncelleme = ? WHERE id = ?""",
                 (form["kod"], form["ad"], form["kategori"], form["parca_tipi"], fiyatlar["perakende"],
-                 fiyatlar["toptan"], int(form["aktif"]), simdi(), urun_id),
+                 fiyatlar["toptan"], fiyatlar["hammadde_kg"], int(form["aktif"]), simdi(), urun_id),
             )
             if degisenler:
                 islem_kaydet("Ürün düzenlendi", f"{form['kod']} — " + "; ".join(degisenler))
